@@ -38,6 +38,11 @@ def get_active_object() -> Object | None:
     return bpy.context.active_object
 
 
+def get_active_object_by_type(type_str: str) -> Object | None:
+    obj = bpy.context.active_object
+    return obj if obj and obj.type == type_str else None
+
+
 def deactive():
     bpy.context.view_layer.objects.active = None
 

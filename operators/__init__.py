@@ -10,6 +10,7 @@ from . import (
     validate,
     rigging,
     armature,
+    gpencil,
 )
 
 REGISTER_CLASSES = (
@@ -24,4 +25,5 @@ REGISTER_CLASSES = (
     validate,
     rigging,
     armature,
+    gpencil,
 )

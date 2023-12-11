@@ -182,7 +182,7 @@ class ViewPanel(SidePanelBase, Panel):
 #             panel="VIEW3D_PT_transform_orientations",
 #         )
 #
-#         ## Transform Pivot Point
+# Transform Pivot Point
 #         pivot_row = box.row(align=True)
 #         if object_mode in {'OBJECT', 'EDIT', 'EDIT_GPENCIL', 'SCULPT_GPENCIL'} or has_pose_mode:
 #             pivot_row.prop(tool_settings, "transform_pivot_point", text="", icon_only=False)
@@ -348,6 +348,85 @@ class UVPanel(SidePanelBase, Panel):
         uv_grid = _get_gridflow(self.layout, columns=3)
         uv_grid.operator("mesh.mark_seam", text="Mark Seam").clear = False
         uv_grid.operator("mesh.mark_seam", text="Clear Seam").clear = True
+
+# TODO: 정리
+
+from collections import namedtuple
+from ..operators.gpencil import SetBrushAndMaterial
+
+MaterialInfo = namedtuple("GPencilMaterialInfo", "show_stroke show_fill stroke_color fill_color")
+ToolInfo = namedtuple("GPencilTemplateInfo", "brush_name material_name")
+
+GREASE_PENCIL_BRUSHES = [
+    "Pencil", "Pencil Soft",
+    "Ink Pen","Ink Pen Rough",
+    "Marker Bold", "Marker Chisel",
+    "Airbrush",
+]
+GREASE_PENCIL_MATERIAL_INFOS = {
+    "GPM_Red":   MaterialInfo(True, False, (1, 0, 0, 1), (1, 1, 1, 1)),
+    "GPM_Green": MaterialInfo(True, False, (0, 1, 0, 1), (1, 1, 1, 1)),
+    "GPM_Blue":  MaterialInfo(True, False, (0, 0, 1, 1), (1, 1, 1, 1)),
+    "GPM_Black": MaterialInfo(True, False, (0, 0, 0, 1), (1, 1, 1, 1)),
+    "GPM_White": MaterialInfo(True, False, (1, 1, 1, 1), (0, 0, 0, 1)),
+}
+GREASE_PENCIL_TOOL_INFOS = {
+    "Pencil": ToolInfo("Pencil", "GPM_Black"),
+    "Airbrush": ToolInfo("Pencil Soft", "GPM_Black"),
+    "Red Pen": ToolInfo("Ink Pen", "GPM_Red"),
+    "Green Pen": ToolInfo("Ink Pen", "GPM_Green"),
+    "Blue Pen": ToolInfo("Ink Pen", "GPM_Blue"),
+    "Black Pen": ToolInfo("Ink Pen", "GPM_Black"),
+    "White Pen": ToolInfo("Ink Pen", "GPM_White"),
+}
+
+
+class GreasePencilPanel(SidePanelBase, Panel):
+    bl_idname = "BU_PT_GreasePencilPanel"
+    bl_label = "Grease Pencil"
+
+    def draw(self, context):
+        gpencil = _get_gridflow(self.layout, columns=2)
+        gpencil.operator("object.gpencil_add", text="+").type = "EMPTY"
+        gpencil.label()
+        try:
+            gpencil.operator("object.mode_set", text="Draw Mode").mode = "PAINT_GPENCIL"
+        except:
+            pass
+
+        brushes_grid = _get_gridflow(self.layout, columns=2, header_text="Brushes")
+        for brush_name in GREASE_PENCIL_BRUSHES:
+            op = brushes_grid.operator(SetBrushAndMaterial.bl_idname, text=brush_name)
+            op.set_brush = True
+            op.brush_name = brush_name
+
+        material_grid = _get_gridflow(self.layout, columns=2, header_text="Materials")
+        for material_name, info in GREASE_PENCIL_MATERIAL_INFOS.items():
+            op = material_grid.operator(SetBrushAndMaterial.bl_idname, text=material_name)
+            op.set_material = True
+            op.material_name = material_name
+            op.show_stroke = info.show_stroke
+            op.show_fill = info.show_fill
+            op.stroke_color = info.stroke_color
+            op.fill_color = info.fill_color
+
+        tool_grid = _get_gridflow(self.layout, columns=2, header_text="Toolsets")
+        for tool_name, tool_info in GREASE_PENCIL_TOOL_INFOS.items():
+            brush_name: str = tool_info.brush_name
+            material_name: str = tool_info.material_name
+            material_info = GREASE_PENCIL_MATERIAL_INFOS[material_name]
+            op = tool_grid.operator(SetBrushAndMaterial.bl_idname, text=tool_name)
+            op.set_brush = True
+            op.set_material = True
+            op.brush_name = brush_name
+            op.material_name = material_name
+            op.show_stroke = material_info.show_stroke
+            op.show_fill = material_info.show_fill
+            op.stroke_color = material_info.stroke_color
+            op.fill_color = material_info.fill_color
+
+        # TODO: Overlap Stroke Option for airbrush
+        # blue_marker.use_overlap_stroke = True
 
 
 class LookPanel(SidePanelBase, Panel):
