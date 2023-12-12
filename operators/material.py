@@ -116,6 +116,8 @@ class CreateAndAssignMaterial(Operator):
         for node in nodes:
             nodes.remove(node)
 
+        print(f"TODO: UVMap노드 생싱 후 연결 필요.")
+
         # Principled BSDF 노드 생성
         bsdf_node = nodes.new("ShaderNodeBsdfPrincipled")
         bsdf_node.location = (X + 300, Y)

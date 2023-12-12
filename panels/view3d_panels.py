@@ -6,6 +6,7 @@ from bpy.types import Panel
 from ..functions.context import is_mode, get_active_object_by_type, is_object_mode, has_selected_objects
 from ..functions.gpencil import is_current_grease_pencil_brush_name, is_grease_pencil_placement_mode, \
     get_active_material_in_gpencil_object
+from ..functions.ui import create_gridflow_at_layout
 from ..operators.align import AlignAxisAverageOperator, AlignAxisMinMaxOperator
 from ..operators.armature import ToggleWeightPaintMode
 from ..operators.gpencil import SetStrokePlacement, SetBrushAndMaterial
@@ -22,11 +23,6 @@ from ..operators.text import CreateText
 from ..operators.validate import ValidateScene
 from ..operators.viewport import SetViewportLightingMode, ToggleViewportCamera, ToggleViewportCavity
 from ..utils import is_developer_mode
-
-DEFAULT_SCALE_Y: float = 0.85
-DEFAULT_BL_OPTIONS = {"DEFAULT_CLOSED"}
-MIN_SCALE_Y: float = 0.5
-DEFAULT_VERTEX_GROUP_EXPORT_PATH: str = "d:/tmp/vertex_group.json"
 
 MaterialInfo = namedtuple("GPencilMaterialInfo", "show_stroke show_fill stroke_color fill_color")
 ToolInfo = namedtuple("GPencilTemplateInfo", "brush_name material_name")
@@ -74,29 +70,11 @@ GREASE_PENCIL_TOOL_INFOS = {
 }
 
 
-def _get_gridflow(layout, columns: int = 3, header_text: str = None):
-    column = layout.column()
-    box = column.box()
-    box.scale_y = DEFAULT_SCALE_Y
-    if header_text and header_text != "":
-        header_row = box.row()
-        header_row.scale_y = MIN_SCALE_Y
-        header_row.alignment = "CENTER"
-        header_row.label(text=header_text)
-    grid_flow = box.grid_flow(
-        row_major=True,
-        columns=columns,
-        even_columns=False,
-        even_rows=False,
-        align=True)
-    return grid_flow
-
-
 class SidePanelBase:
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "OB"
-    bl_options = DEFAULT_BL_OPTIONS
+    bl_options = {"DEFAULT_CLOSED"}
 
 
 # class SelectionPanel(SidePanelBase, Panel):
@@ -157,7 +135,7 @@ class ViewPanel(SidePanelBase, Panel):
         overlay = space.overlay
         shading = space.shading
 
-        axis_grid = _get_gridflow(self.layout, columns=4)
+        axis_grid = create_gridflow_at_layout(self.layout, columns=4)
         axis_grid.operator('view3d.view_axis', text='Top', icon='NONE').type = 'TOP'
         axis_grid.operator('view3d.view_axis', text='Left', icon='NONE').type = 'LEFT'
         axis_grid.operator('view3d.view_axis', text='Right', icon='NONE').type = 'RIGHT'
@@ -166,7 +144,7 @@ class ViewPanel(SidePanelBase, Panel):
         axis_grid.operator(ToggleViewportCamera.bl_idname, text='Camera', depress=self._is_camera_view(context))
         axis_grid.operator('view3d.localview', text='Isolate', depress=self._is_local_view(context))
 
-        viewport_grid = _get_gridflow(self.layout, columns=3)
+        viewport_grid = create_gridflow_at_layout(self.layout, columns=3)
         viewport_grid.operator('view3d.toggle_xray', text="XRay", depress=self._is_xray(context))
         viewport_grid.prop(overlay, "show_wireframes", text="Wire", toggle=True)
         viewport_grid.operator(ToggleViewportCavity.bl_idname, text="Cavity", depress=self._is_cavity(context))
@@ -177,7 +155,7 @@ class ViewPanel(SidePanelBase, Panel):
         viewport_grid.prop(shading, "show_backface_culling", text="BackCull", toggle=True)
         viewport_grid.prop(overlay, "show_face_orientation", text="Orient", toggle=True)
 
-        lighting_grid = _get_gridflow(self.layout, columns=3)
+        lighting_grid = create_gridflow_at_layout(self.layout, columns=3)
         lighting_grid.operator(SetViewportLightingMode.bl_idname, text="Default Lit",
                                depress=self._is_default_lighting(context)).mode = "DEFAULT"
         lighting_grid.operator(SetViewportLightingMode.bl_idname, text="Sculpt Lit",
@@ -238,7 +216,7 @@ class CreatePanel(SidePanelBase, Panel):
     bl_label = "Create"
 
     def draw(self, context):
-        primitive_grid = _get_gridflow(self.layout, columns=3)
+        primitive_grid = create_gridflow_at_layout(self.layout, columns=3)
         primitive_grid.operator("mesh.primitive_cube_add", text="Cube", icon="NONE")
         primitive_grid.operator("mesh.primitive_uv_sphere_add", text="Sphere", icon="NONE")
         primitive_grid.operator("mesh.primitive_cylinder_add", text="Cylinder", icon="NONE")
@@ -246,7 +224,7 @@ class CreatePanel(SidePanelBase, Panel):
         primitive_grid.operator("mesh.primitive_grid_add", text="Grid", icon="NONE")
         primitive_grid.operator("mesh.primitive_torus_add", text="Torus", icon="NONE")
 
-        etc_grid = _get_gridflow(self.layout, columns=2)
+        etc_grid = create_gridflow_at_layout(self.layout, columns=2)
         etc_grid.operator(CreateText.bl_idname, text="Text").text = "Hello, World!"
 
         # meta_grid = _get_gridflow(self.layout, columns=3, header_text="Meta")
@@ -264,7 +242,7 @@ class EditPanel(SidePanelBase, Panel):
 
     def draw(self, context):
         # Origin & 3D Cursor
-        origin_grid = _get_gridflow(self.layout, columns=2, header_text="")
+        origin_grid = create_gridflow_at_layout(self.layout, columns=2, header_text="")
         origin_grid.prop(bpy.context.scene.tool_settings, "use_transform_data_origin", text="Edit Pivot", toggle=True)
         origin_grid.label()
         # origin_grid.operator('object.move_to_collection', text="Group (M)")
@@ -272,7 +250,7 @@ class EditPanel(SidePanelBase, Panel):
         origin_grid.operator('object.parent_clear', text="Unparent").type = "CLEAR_KEEP_TRANSFORM"  # "CLEAR"
 
         # Object Tools
-        object_grid = _get_gridflow(self.layout, columns=2, header_text="")
+        object_grid = create_gridflow_at_layout(self.layout, columns=2, header_text="")
         object_grid.enabled = is_object_mode() and has_selected_objects()
         object_grid.operator('object.join', text='Join')
         object_grid.operator('mesh.separate', text='Separate').type = 'LOOSE'
@@ -281,7 +259,7 @@ class EditPanel(SidePanelBase, Panel):
         object_grid.operator('object.transforms_to_deltas', text='Freeze', icon='NONE').mode = 'ALL'
 
         # Common Tools
-        common_grid = _get_gridflow(self.layout, columns=2, header_text="")
+        common_grid = create_gridflow_at_layout(self.layout, columns=2, header_text="")
         common_grid.operator('mesh.merge', text='Merge', icon='NONE').type = 'CENTER'
         common_grid.operator(MergeCloseVertices.bl_idname, text='Merge Near', icon='NONE')
         common_grid.operator('mesh.split', text='Extract', icon='NONE')
@@ -291,11 +269,11 @@ class EditPanel(SidePanelBase, Panel):
         common_grid.operator('mesh.edge_face_add', text="Fill")
 
         # Vertex Tools
-        vertex_grid = _get_gridflow(self.layout, header_text="")
+        vertex_grid = create_gridflow_at_layout(self.layout, header_text="")
         vertex_grid.operator('mesh.vert_connect_path', text='V ConnectPath', icon='NONE')
 
         # Edge Tools
-        edge_grid = _get_gridflow(self.layout, header_text="")
+        edge_grid = create_gridflow_at_layout(self.layout, header_text="")
         edge_grid.operator('mesh.bevel', text='E Bevel', icon='NONE').affect = 'EDGES'
         edge_grid.operator('transform.edge_slide', text='E Slide', icon='NONE')
         edge_grid.operator('mesh.loopcut_slide', text='E /', icon='NONE')
@@ -304,7 +282,7 @@ class EditPanel(SidePanelBase, Panel):
         edge_grid.operator("mesh.rip", text="E Rip")
 
         # Face Tools
-        face_grid = _get_gridflow(self.layout, header_text="")
+        face_grid = create_gridflow_at_layout(self.layout, header_text="")
         face_grid.operator('mesh.inset', text="F Inset", icon='NONE')
         face_grid.operator('mesh.subdivide', text='F Subdivde', icon='NONE')
         face_grid.operator('mesh.unsubdivide', text='F Unsubdive', icon='NONE')
@@ -314,7 +292,7 @@ class EditPanel(SidePanelBase, Panel):
 
         # Vertex Alignment
         VA_EMBOSS: bool = False
-        va_grid = _get_gridflow(self.layout, header_text="")
+        va_grid = create_gridflow_at_layout(self.layout, header_text="")
         x_max = va_grid.operator(AlignAxisMinMaxOperator.bl_idname, text='+', icon='NONE', emboss=VA_EMBOSS)
         x_max.axis = 'X'
         x_max.side = 'POSITIVE'
@@ -338,7 +316,7 @@ class EditPanel(SidePanelBase, Panel):
         z_min.side = 'NEGATIVE'
 
         # Selection Tools
-        selection_grid = _get_gridflow(self.layout, header_text="")
+        selection_grid = create_gridflow_at_layout(self.layout, header_text="")
         selection_grid.operator("mesh.select_linked", text="SEL Linked")
         selection_grid.operator(SelectBoundaryEdges.bl_idname, text="SEL Boundary")
 
@@ -348,7 +326,7 @@ class Riggingpanel(SidePanelBase, Panel):
     bl_label = "Rigging"
 
     def draw(self, context):
-        armature_grid = _get_gridflow(self.layout, columns=2, header_text="Armature")
+        armature_grid = create_gridflow_at_layout(self.layout, columns=2, header_text="Armature")
         armature_grid.operator("object.armature_add", text="Create Armature")
         armature_grid.operator("object.armature_basic_human_metarig_add", text="Basic Human")
         armature_grid.operator("object.armature_human_metarig_add", text="Full Human")
@@ -362,7 +340,7 @@ class Riggingpanel(SidePanelBase, Panel):
         armature_grid.operator(AutoSkin.bl_idname, text="Auto Skin")
         armature_grid.operator("pose.transforms_clear", text="Reset Pose")
 
-        weight_paint_grid = _get_gridflow(self.layout, columns=2, header_text="Weight Paint")
+        weight_paint_grid = create_gridflow_at_layout(self.layout, columns=2, header_text="Weight Paint")
         weight_paint_grid.operator_context = "EXEC_DEFAULT"  # Save, Load시 invoke 메서드를 호출시키지 않기 위해
         weight_paint_grid.operator(ToggleWeightPaintMode.bl_idname, text="Edit Weight Mode")
         weight_paint_grid.label()
@@ -371,7 +349,7 @@ class Riggingpanel(SidePanelBase, Panel):
         clean_vg.limit = 0.05
         weight_paint_grid.prop(bpy.data.brushes["Draw"], "use_frontface", text="Front Face Only", toggle=True)
 
-        vertex_group_grid = _get_gridflow(self.layout, columns=2, header_text="Vertex Group")
+        vertex_group_grid = create_gridflow_at_layout(self.layout, columns=2, header_text="Vertex Group")
         vertex_group_grid.operator_context = "INVOKE_DEFAULT"  # 개별 Operator에서는 operator_context를 사용할 수 없었음.
         vertex_group_grid.operator(SaveObjectVertexGroups.bl_idname, text="Save")
         vertex_group_grid.operator(LoadObjectVertexGroups.bl_idname, text="Load")
@@ -382,7 +360,7 @@ class NormalPanel(SidePanelBase, Panel):
     bl_label = "Normal"
 
     def draw(self, context):
-        normal_tool_grid = _get_gridflow(self.layout, columns=2)
+        normal_tool_grid = create_gridflow_at_layout(self.layout, columns=2)
         normal_tool_grid.operator("mesh.mark_sharp", text="Mark Sharp")
         normal_tool_grid.operator("mesh.mark_sharp", text="Clear Sharp").clear = True
         normal_tool_grid.operator("mesh.flip_normals", text="Reverse", icon="NONE")
@@ -393,7 +371,7 @@ class UVPanel(SidePanelBase, Panel):
     bl_label = "UV"
 
     def draw(self, context):
-        uv_grid = _get_gridflow(self.layout, columns=3)
+        uv_grid = create_gridflow_at_layout(self.layout, columns=3)
         uv_grid.operator("mesh.mark_seam", text="Mark Seam").clear = False
         uv_grid.operator("mesh.mark_seam", text="Clear Seam").clear = True
 
@@ -405,7 +383,7 @@ class GreasePencilPanel(SidePanelBase, Panel):
     def draw(self, context):
         gpencil_object: Object | None = get_active_object_by_type("GPENCIL")
 
-        gpencil_grid = _get_gridflow(self.layout, columns=2)
+        gpencil_grid = create_gridflow_at_layout(self.layout, columns=2)
         gpencil_grid.operator("object.gpencil_add", text="+").type = "EMPTY"
         gpencil_grid.label()
         gpencil_grid.operator("object.mode_set", text="Object Mode", depress=is_mode("OBJECT")).mode = "OBJECT"
@@ -418,13 +396,13 @@ class GreasePencilPanel(SidePanelBase, Panel):
                 pass
 
         # Placement
-        placement_grid = _get_gridflow(self.layout, columns=2, header_text="Placement")
+        placement_grid = create_gridflow_at_layout(self.layout, columns=2, header_text="Placement")
         for mode in GREASE_PENCIL_PLACEMENTS:
             placement_grid.operator(SetStrokePlacement.bl_idname, text=f"On {mode.capitalize()}",
                                     depress=is_grease_pencil_placement_mode(mode)).placement = mode
 
         # Brush
-        brushes_grid = _get_gridflow(self.layout, columns=2, header_text="Brush")
+        brushes_grid = create_gridflow_at_layout(self.layout, columns=2, header_text="Brush")
         for brush_name in GREASE_PENCIL_BRUSHES:
             op = brushes_grid.operator(SetBrushAndMaterial.bl_idname, text=brush_name,
                                        depress=is_current_grease_pencil_brush_name(brush_name))
@@ -432,7 +410,7 @@ class GreasePencilPanel(SidePanelBase, Panel):
             op.brush_name = brush_name
 
         # Eraser
-        eraser_grid = _get_gridflow(self.layout, columns=2, header_text="Eraser")
+        eraser_grid = create_gridflow_at_layout(self.layout, columns=2, header_text="Eraser")
         for eraser_name in GREASE_PENCIL_ERASERS:
             op = eraser_grid.operator(SetBrushAndMaterial.bl_idname, text=eraser_name,
                                       depress=is_current_grease_pencil_brush_name(eraser_name))
@@ -441,7 +419,7 @@ class GreasePencilPanel(SidePanelBase, Panel):
 
         # Material
         active_material: Material | None = get_active_material_in_gpencil_object(gpencil_object)
-        material_grid = _get_gridflow(self.layout, columns=2, header_text="Material")
+        material_grid = create_gridflow_at_layout(self.layout, columns=2, header_text="Material")
         for material_name, info in GREASE_PENCIL_MATERIAL_INFOS.items():
             button_text = material_name.split("_")[-1]
             op = material_grid.operator(SetBrushAndMaterial.bl_idname, text=button_text,
@@ -477,19 +455,19 @@ class LookPanel(SidePanelBase, Panel):
     bl_label = "Look"
 
     def draw(self, context):
-        light_grid = _get_gridflow(self.layout, columns=4, header_text=None)
+        light_grid = create_gridflow_at_layout(self.layout, columns=4, header_text=None)
         light_grid.operator("object.light_add", text="Sun", icon="NONE").type = "SUN"
         light_grid.operator("object.light_add", text="Point", icon="NONE").type = "POINT"
         light_grid.operator("object.light_add", text="Spot", icon="NONE").type = "SPOT"
         light_grid.operator("object.light_add", text="Area", icon="NONE").type = "AREA"
 
-        material_grid = _get_gridflow(self.layout, columns=2)
+        material_grid = create_gridflow_at_layout(self.layout, columns=2)
         material_grid.operator(CreateAndAssignMaterial.bl_idname, text="New Mat", icon="NONE").color = "RANDOM"
         material_grid.label(text="")
         material_grid.operator(CopyMaterial.bl_idname, text="Copy Mat", icon="NONE")
         material_grid.operator(PasteMaterial.bl_idname, text="Paste Mat", icon="NONE")
 
-        palette_grid = _get_gridflow(self.layout, columns=3, header_text="")
+        palette_grid = create_gridflow_at_layout(self.layout, columns=3, header_text="")
         palette_grid.operator(CreateAndAssignMaterial.bl_idname, text="R").color = "RED"
         palette_grid.operator(CreateAndAssignMaterial.bl_idname, text="G").color = "GREEN"
         palette_grid.operator(CreateAndAssignMaterial.bl_idname, text="B").color = "BLUE"
@@ -506,14 +484,14 @@ class SystemPanel(SidePanelBase, Panel):
     # bl_parent_id = MainPanel.bl_idname
 
     def draw(self, context):
-        optimization_grid = _get_gridflow(self.layout, columns=1)
+        optimization_grid = create_gridflow_at_layout(self.layout, columns=1)
         optimization_grid.operator(PrintAllHierarchy.bl_idname, text="Print Hierarchy")
         optimization_grid.operator(ValidateScene.bl_idname, text="Validate Scene")
         optimization_grid.operator(FixMeshNames.bl_idname, text="Fix Mesh Names")
         optimization_grid.operator(ClearUnusedMaterials.bl_idname, text="Cleanup Materials")
         optimization_grid.operator("outliner.orphans_purge", text="Cleanup Datablocks")
 
-        system_grid = _get_gridflow(self.layout, columns=2)
+        system_grid = create_gridflow_at_layout(self.layout, columns=2)
         system_grid.operator('object.mode_set', text='Object Mode', icon='NONE').mode = 'OBJECT'
 
         # Edit Mode
@@ -537,5 +515,5 @@ class SystemPanel(SidePanelBase, Panel):
         system_grid.operator('wm.console_toggle', text='Console', icon='NONE')
 
         if is_developer_mode():
-            dev_grid = _get_gridflow(self.layout, columns=1)
+            dev_grid = create_gridflow_at_layout(self.layout, columns=1)
             dev_grid.operator("script.reload", text="Refresh", icon="FILE_REFRESH")
