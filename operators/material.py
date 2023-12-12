@@ -172,7 +172,7 @@ class CreateAndAssignMaterial(Operator):
 
         # 선택된 오브젝트들에 준비된 재질을 지정한다.
         for obj in bpy.context.selected_objects:
-            if obj.type == "MESH":
+            if obj.type in ["MESH", "FONT"]:
                 obj.data.materials.clear()
                 obj.data.materials.append(material)
 

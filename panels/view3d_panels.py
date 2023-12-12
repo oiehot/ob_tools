@@ -18,6 +18,7 @@ from ..operators.rigging import (
     SaveObjectVertexGroups, LoadObjectVertexGroups
 )
 from ..operators.scene import FixMeshNames, PrintAllHierarchy
+from ..operators.text import CreateText
 from ..operators.validate import ValidateScene
 from ..operators.viewport import SetViewportLightingMode, ToggleViewportCamera, ToggleViewportCavity
 from ..utils import is_developer_mode
@@ -244,6 +245,10 @@ class CreatePanel(SidePanelBase, Panel):
         primitive_grid.operator("mesh.primitive_plane_add", text="Plane", icon="NONE")
         primitive_grid.operator("mesh.primitive_grid_add", text="Grid", icon="NONE")
         primitive_grid.operator("mesh.primitive_torus_add", text="Torus", icon="NONE")
+
+        etc_grid = _get_gridflow(self.layout, columns=2)
+        etc_grid.operator(CreateText.bl_idname, text="Text").text = "Hello, World!"
+
         # meta_grid = _get_gridflow(self.layout, columns=3, header_text="Meta")
         # meta_grid.operator("object.metaball_add", text="Ball", icon="NONE").type = "BALL"
         # meta_grid.operator("object.metaball_add", text="Cube", icon="NONE").type = "CUBE"
@@ -394,21 +399,21 @@ class UVPanel(SidePanelBase, Panel):
 
 
 class GreasePencilPanel(SidePanelBase, Panel):
-    bl_idname = "BU_PT_GreasePencilPanel"
+    bl_idname = "OB_PT_GreasePencilPanel"
     bl_label = "Grease Pencil"
 
     def draw(self, context):
         gpencil_object: Object | None = get_active_object_by_type("GPENCIL")
 
-        gpencil = _get_gridflow(self.layout, columns=2)
-        gpencil.operator("object.gpencil_add", text="+").type = "EMPTY"
-        gpencil.label()
-        gpencil.operator("object.mode_set", text="Object Mode", depress=is_mode("OBJECT")).mode = "OBJECT"
+        gpencil_grid = _get_gridflow(self.layout, columns=2)
+        gpencil_grid.operator("object.gpencil_add", text="+").type = "EMPTY"
+        gpencil_grid.label()
+        gpencil_grid.operator("object.mode_set", text="Object Mode", depress=is_mode("OBJECT")).mode = "OBJECT"
 
         if gpencil_object:
             try:
-                gpencil.operator("object.mode_set", text="Draw Mode",
-                                 depress=is_mode("PAINT_GPENCIL")).mode = "PAINT_GPENCIL"
+                gpencil_grid.operator("object.mode_set", text="Draw Mode",
+                                      depress=is_mode("PAINT_GPENCIL")).mode = "PAINT_GPENCIL"
             except:
                 pass
 
