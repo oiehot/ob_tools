@@ -1,13 +1,10 @@
 import bpy
+from bpy.props import BoolProperty, EnumProperty, StringProperty, FloatVectorProperty
 from bpy.types import (
     Operator,
-    Object, Material,
-    Brush,
-    GreasePencil,
-    GPencilLayer,
-    MaterialGPencilStyle,
+    Object, GreasePencil,
 )
-from bpy.props import BoolProperty, EnumProperty, StringProperty, FloatVectorProperty
+
 from ..functions.context import get_active_object_by_type
 from ..functions.gpencil import (
     has_grease_pencil_brush,
@@ -15,10 +12,40 @@ from ..functions.gpencil import (
     print_grease_pencil,
     create_grease_pencil_material,
     add_material_to_grease_pencil,
-    get_material_index_in_grease_pencil,
     set_grease_pencil_active_material_by_name,
     get_grease_pencil_style_from_material,
 )
+
+
+class SetStrokePlacement(Operator):
+    bl_idname = "gpencil.set_stroke_placement"
+    bl_label = "Set Stroke Placement"
+
+    placement: EnumProperty(
+        name="Placement",
+        items=(
+            ("ORIGIN", "Origin", "Origin"),
+            ("CURSOR", "3D Cursor", "Cursor"),
+            ("SURFACE", "Surface", "Surface"),
+            ("STROKE", "Stroke", "Stroke"),
+        )
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return True if bpy.context.mode == "PAINT_GPENCIL" and get_active_object_by_type("GPENCIL") else False
+
+    def execute(self, context):
+        # gpencil_object: Object = get_active_object_by_type("GPENCIL")
+        # gpencil: GreasePencil = gpencil_object.data
+
+        bpy.context.scene.tool_settings.gpencil_stroke_placement_view3d = str(self.placement)
+        match self.placement:
+            case "SURFACE":
+                bpy.context.object.data.zdepth_offset = 0.01
+            case "STROKE":
+                bpy.context.scene.tool_settings.gpencil_stroke_snap_mode = 'NONE'
+        return {'FINISHED'}
 
 
 class SetBrushAndMaterial(Operator):

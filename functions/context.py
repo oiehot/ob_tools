@@ -30,6 +30,10 @@ def is_edit_mode() -> bool:
     return True if get_mode() == "EDIT" else False
 
 
+def is_mode(mode: str) -> bool:
+    return True if get_mode() == mode else False
+
+
 def set_active_object(obj: Object):
     bpy.context.view_layer.objects.active = obj
 

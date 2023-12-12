@@ -1,33 +1,76 @@
+from collections import namedtuple
+
 import bpy
 from bpy.types import Panel
 
-from ..functions.context import (is_object_mode, has_selected_objects)
+from ..functions.context import is_mode, get_active_object_by_type, is_object_mode, has_selected_objects
+from ..functions.gpencil import is_current_grease_pencil_brush_name, is_grease_pencil_placement_mode, \
+    get_active_material_in_gpencil_object
 from ..operators.align import AlignAxisAverageOperator, AlignAxisMinMaxOperator
-from ..operators.armature import (ToggleWeightPaintMode)
-from ..operators.material import ClearUnusedMaterials
-from ..operators.material import CopyMaterial, PasteMaterial
-from ..operators.material import CreateAndAssignMaterial
-from ..operators.mesh import MergeCloseVertices
-from ..operators.mesh import QuickMeshDeleteOperator
-from ..operators.mesh import SelectBoundaryEdges
+from ..operators.armature import ToggleWeightPaintMode
+from ..operators.gpencil import SetStrokePlacement, SetBrushAndMaterial
+from ..operators.material import ClearUnusedMaterials, CopyMaterial, PasteMaterial, CreateAndAssignMaterial
+from ..operators.mesh import MergeCloseVertices, QuickMeshDeleteOperator, SelectBoundaryEdges
 from ..operators.rigging import (
     GenerateRigFromArmature, RemoveGeneratedRig,
     AutoSkin,
     DetachRigMesh, AttachRigMesh,
     SaveObjectVertexGroups, LoadObjectVertexGroups
 )
-from ..operators.scene import FixMeshNames
-from ..operators.scene import PrintAllHierarchy
+from ..operators.scene import FixMeshNames, PrintAllHierarchy
 from ..operators.validate import ValidateScene
-from ..operators.viewport import SetViewportLightingMode
-from ..operators.viewport import ToggleViewportCamera
-from ..operators.viewport import ToggleViewportCavity
+from ..operators.viewport import SetViewportLightingMode, ToggleViewportCamera, ToggleViewportCavity
 from ..utils import is_developer_mode
 
 DEFAULT_SCALE_Y: float = 0.85
 DEFAULT_BL_OPTIONS = {"DEFAULT_CLOSED"}
 MIN_SCALE_Y: float = 0.5
 DEFAULT_VERTEX_GROUP_EXPORT_PATH: str = "d:/tmp/vertex_group.json"
+
+MaterialInfo = namedtuple("GPencilMaterialInfo", "show_stroke show_fill stroke_color fill_color")
+ToolInfo = namedtuple("GPencilTemplateInfo", "brush_name material_name")
+
+GREASE_PENCIL_BRUSHES = [
+    "Pencil",
+    "Pencil Soft",
+    "Ink Pen",
+    "Ink Pen Rough",
+    # "Marker Bold",
+    "Marker Chisel",
+    # "Airbrush",
+]
+
+GREASE_PENCIL_ERASERS = [
+    # "Eraser Hard",
+    # "Eraser Soft",
+    "Eraser Point",
+    "Eraser Stroke",
+]
+
+GREASE_PENCIL_PLACEMENTS = [
+    "ORIGIN",
+    "SURFACE",
+    "CURSOR",
+    "STROKE",
+]
+
+GREASE_PENCIL_MATERIAL_INFOS = {
+    "GPM_Red": MaterialInfo(True, False, (1, 0, 0, 1), (1, 1, 1, 1)),
+    "GPM_Green": MaterialInfo(True, False, (0, 1, 0, 1), (1, 1, 1, 1)),
+    "GPM_Blue": MaterialInfo(True, False, (0, 0, 1, 1), (1, 1, 1, 1)),
+    "GPM_Black": MaterialInfo(True, False, (0, 0, 0, 1), (1, 1, 1, 1)),
+    "GPM_White": MaterialInfo(True, False, (1, 1, 1, 1), (0, 0, 0, 1)),
+}
+
+GREASE_PENCIL_TOOL_INFOS = {
+    "Pencil": ToolInfo("Pencil", "GPM_Black"),
+    "Airbrush": ToolInfo("Pencil Soft", "GPM_Black"),
+    "Red Pen": ToolInfo("Ink Pen", "GPM_Red"),
+    "Green Pen": ToolInfo("Ink Pen", "GPM_Green"),
+    "Blue Pen": ToolInfo("Ink Pen", "GPM_Blue"),
+    "Black Pen": ToolInfo("Ink Pen", "GPM_Black"),
+    "White Pen": ToolInfo("Ink Pen", "GPM_White"),
+}
 
 
 def _get_gridflow(layout, columns: int = 3, header_text: str = None):
@@ -349,60 +392,55 @@ class UVPanel(SidePanelBase, Panel):
         uv_grid.operator("mesh.mark_seam", text="Mark Seam").clear = False
         uv_grid.operator("mesh.mark_seam", text="Clear Seam").clear = True
 
-# TODO: 정리
-
-from collections import namedtuple
-from ..operators.gpencil import SetBrushAndMaterial
-
-MaterialInfo = namedtuple("GPencilMaterialInfo", "show_stroke show_fill stroke_color fill_color")
-ToolInfo = namedtuple("GPencilTemplateInfo", "brush_name material_name")
-
-GREASE_PENCIL_BRUSHES = [
-    "Pencil", "Pencil Soft",
-    "Ink Pen","Ink Pen Rough",
-    "Marker Bold", "Marker Chisel",
-    "Airbrush",
-]
-GREASE_PENCIL_MATERIAL_INFOS = {
-    "GPM_Red":   MaterialInfo(True, False, (1, 0, 0, 1), (1, 1, 1, 1)),
-    "GPM_Green": MaterialInfo(True, False, (0, 1, 0, 1), (1, 1, 1, 1)),
-    "GPM_Blue":  MaterialInfo(True, False, (0, 0, 1, 1), (1, 1, 1, 1)),
-    "GPM_Black": MaterialInfo(True, False, (0, 0, 0, 1), (1, 1, 1, 1)),
-    "GPM_White": MaterialInfo(True, False, (1, 1, 1, 1), (0, 0, 0, 1)),
-}
-GREASE_PENCIL_TOOL_INFOS = {
-    "Pencil": ToolInfo("Pencil", "GPM_Black"),
-    "Airbrush": ToolInfo("Pencil Soft", "GPM_Black"),
-    "Red Pen": ToolInfo("Ink Pen", "GPM_Red"),
-    "Green Pen": ToolInfo("Ink Pen", "GPM_Green"),
-    "Blue Pen": ToolInfo("Ink Pen", "GPM_Blue"),
-    "Black Pen": ToolInfo("Ink Pen", "GPM_Black"),
-    "White Pen": ToolInfo("Ink Pen", "GPM_White"),
-}
-
 
 class GreasePencilPanel(SidePanelBase, Panel):
     bl_idname = "BU_PT_GreasePencilPanel"
     bl_label = "Grease Pencil"
 
     def draw(self, context):
+        gpencil_object: Object | None = get_active_object_by_type("GPENCIL")
+
         gpencil = _get_gridflow(self.layout, columns=2)
         gpencil.operator("object.gpencil_add", text="+").type = "EMPTY"
         gpencil.label()
-        try:
-            gpencil.operator("object.mode_set", text="Draw Mode").mode = "PAINT_GPENCIL"
-        except:
-            pass
+        gpencil.operator("object.mode_set", text="Object Mode", depress=is_mode("OBJECT")).mode = "OBJECT"
 
-        brushes_grid = _get_gridflow(self.layout, columns=2, header_text="Brushes")
+        if gpencil_object:
+            try:
+                gpencil.operator("object.mode_set", text="Draw Mode",
+                                 depress=is_mode("PAINT_GPENCIL")).mode = "PAINT_GPENCIL"
+            except:
+                pass
+
+        # Placement
+        placement_grid = _get_gridflow(self.layout, columns=2, header_text="Placement")
+        for mode in GREASE_PENCIL_PLACEMENTS:
+            placement_grid.operator(SetStrokePlacement.bl_idname, text=f"On {mode.capitalize()}",
+                                    depress=is_grease_pencil_placement_mode(mode)).placement = mode
+
+        # Brush
+        brushes_grid = _get_gridflow(self.layout, columns=2, header_text="Brush")
         for brush_name in GREASE_PENCIL_BRUSHES:
-            op = brushes_grid.operator(SetBrushAndMaterial.bl_idname, text=brush_name)
+            op = brushes_grid.operator(SetBrushAndMaterial.bl_idname, text=brush_name,
+                                       depress=is_current_grease_pencil_brush_name(brush_name))
             op.set_brush = True
             op.brush_name = brush_name
 
-        material_grid = _get_gridflow(self.layout, columns=2, header_text="Materials")
+        # Eraser
+        eraser_grid = _get_gridflow(self.layout, columns=2, header_text="Eraser")
+        for eraser_name in GREASE_PENCIL_ERASERS:
+            op = eraser_grid.operator(SetBrushAndMaterial.bl_idname, text=eraser_name,
+                                      depress=is_current_grease_pencil_brush_name(eraser_name))
+            op.set_brush = True
+            op.brush_name = eraser_name
+
+        # Material
+        active_material: Material | None = get_active_material_in_gpencil_object(gpencil_object)
+        material_grid = _get_gridflow(self.layout, columns=2, header_text="Material")
         for material_name, info in GREASE_PENCIL_MATERIAL_INFOS.items():
-            op = material_grid.operator(SetBrushAndMaterial.bl_idname, text=material_name)
+            button_text = material_name.split("_")[-1]
+            op = material_grid.operator(SetBrushAndMaterial.bl_idname, text=button_text,
+                                        depress=True if active_material and active_material.name == material_name else False)
             op.set_material = True
             op.material_name = material_name
             op.show_stroke = info.show_stroke
@@ -410,20 +448,20 @@ class GreasePencilPanel(SidePanelBase, Panel):
             op.stroke_color = info.stroke_color
             op.fill_color = info.fill_color
 
-        tool_grid = _get_gridflow(self.layout, columns=2, header_text="Toolsets")
-        for tool_name, tool_info in GREASE_PENCIL_TOOL_INFOS.items():
-            brush_name: str = tool_info.brush_name
-            material_name: str = tool_info.material_name
-            material_info = GREASE_PENCIL_MATERIAL_INFOS[material_name]
-            op = tool_grid.operator(SetBrushAndMaterial.bl_idname, text=tool_name)
-            op.set_brush = True
-            op.set_material = True
-            op.brush_name = brush_name
-            op.material_name = material_name
-            op.show_stroke = material_info.show_stroke
-            op.show_fill = material_info.show_fill
-            op.stroke_color = material_info.stroke_color
-            op.fill_color = material_info.fill_color
+        # tool_grid = _get_gridflow(self.layout, columns=2, header_text="Toolsets")
+        # for tool_name, tool_info in GREASE_PENCIL_TOOL_INFOS.items():
+        #     brush_name: str = tool_info.brush_name
+        #     material_name: str = tool_info.material_name
+        #     material_info = GREASE_PENCIL_MATERIAL_INFOS[material_name]
+        #     op = tool_grid.operator(SetBrushAndMaterial.bl_idname, text=tool_name)
+        #     op.set_brush = True
+        #     op.set_material = True
+        #     op.brush_name = brush_name
+        #     op.material_name = material_name
+        #     op.show_stroke = material_info.show_stroke
+        #     op.show_fill = material_info.show_fill
+        #     op.stroke_color = material_info.stroke_color
+        #     op.fill_color = material_info.fill_color
 
         # TODO: Overlap Stroke Option for airbrush
         # blue_marker.use_overlap_stroke = True

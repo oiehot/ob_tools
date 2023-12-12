@@ -7,7 +7,6 @@ from bpy.types import (
     MaterialGPencilStyle,
 )
 
-
 BLACK = (0.0, 0.0, 0.0, 1.0)
 WHITE = (1.0, 1.0, 1.0, 1.0)
 
@@ -61,6 +60,21 @@ def set_current_grease_pencil_brush(name: str):
         raise Exception(f"GreasePencil용 브러시를 찾을 수 없음 ({name})")
 
 
+def get_current_grease_pencil_brush() -> Brush | None:
+    try:
+        return bpy.context.tool_settings.gpencil_paint.brush
+    except:
+        return None
+
+
+def is_current_grease_pencil_brush_name(brush_name: str) -> bool:
+    brush: Brush = get_current_grease_pencil_brush()
+    if brush:
+        return True if brush.name == brush_name else False
+    else:
+        return False
+
+
 def create_grease_pencil_brush(gpencil: GreasePencil, name: str) -> Brush:
     raise NotImplementedError
     brush = bpy.data.brushes.new(name=name, mode="GPENCIL")
@@ -102,9 +116,9 @@ def get_grease_pencil_style_from_material(material: Material) -> MaterialGPencil
 
 
 def set_grease_pencil_style(style: MaterialGPencilStyle,
-                            stroke:bool=True,
+                            stroke: bool = True,
                             stroke_color=BLACK,
-                            fill:bool=False,
+                            fill: bool = False,
                             fill_color=WHITE,
                             ):
     # Stroke
@@ -124,20 +138,34 @@ def get_material_index_in_grease_pencil(gpencil: GreasePencil, material_name: st
     return gpencil.materials.find(material_name)
 
 
-def set_grease_pencil_active_material_by_idx(gpencil_object: GreasePencil, index: int):
+def get_active_material_index_in_gpencil_object(obj: Object) -> int:
+    assert (obj.type == "GPENCIL")
+    return obj.active_material_index
+
+
+def get_active_material_in_gpencil_object(obj: Object) -> Material | None:
+    if obj and obj.type == "GPENCIL":
+        idx: int = obj.active_material_index
+        gpencil: GreasePencil = obj.data
+        return gpencil.materials[idx]
+    else:
+        return None
+
+
+def set_grease_pencil_active_material_by_idx(gpencil: GreasePencil, index: int):
     # gpencil.materials.active_index = index
-    gpencil_object.active_material_index = index
+    gpencil.active_material_index = index
 
 
-def set_grease_pencil_active_material_by_name(gpencil_object: Object, material_name: str) -> bool:
+def set_grease_pencil_active_material_by_name(obj: Object, material_name: str) -> bool:
     """재질의 이름을 통해 GreasePencil에 등록된 재질을 활성화(선택) 한다.
     """
-    assert(gpencil_object.type == "GPENCIL")
-    gpencil = gpencil_object.data
+    assert (obj.type == "GPENCIL")
+    gpencil = obj.data
 
     idx: int = get_material_index_in_grease_pencil(gpencil, material_name)
     if idx > 0:
-        set_grease_pencil_active_material_by_idx(gpencil_object, idx)
+        set_grease_pencil_active_material_by_idx(obj, idx)
         return True
     else:
         return False
@@ -166,7 +194,7 @@ def add_material_to_grease_pencil(gpencil: GreasePencil, material: Material):
         gpencil.materials.append(material)
 
 
-def cleat_materials_in_grease_pencil(gpencil: GreasePencil):
+def clear_materials_in_grease_pencil(gpencil: GreasePencil):
     """GreasePencil에 등록된 재질들을 모두 제거한다.
     """
     gpencil.materials.clear()
@@ -178,6 +206,14 @@ def remove_all_grease_pencil_materials():
     materials = [mat for mat in bpy.data.materials if mat.grease_pencil]
     for material in materials:
         bpy.data.materials.remove(material)
+
+
+def get_grease_pencil_placement_mode() -> str:
+    return bpy.context.scene.tool_settings.gpencil_stroke_placement_view3d
+
+
+def is_grease_pencil_placement_mode(mode: str) -> bool:
+    return True if get_grease_pencil_placement_mode() == mode else False
 
 
 # def print_gpencil_material(material: Material):
