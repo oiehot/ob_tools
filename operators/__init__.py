@@ -12,6 +12,7 @@ from . import (
     armature,
     gpencil,
     text,
+    modifier,
 )
 
 REGISTER_CLASSES = (
@@ -28,4 +29,5 @@ REGISTER_CLASSES = (
     armature,
     gpencil,
     text,
+    modifier,
 )

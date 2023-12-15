@@ -1,6 +1,7 @@
 import bmesh
 import bpy
 from bmesh.types import BMesh, BMVert, BMEdge, BMFace
+from bpy.types import Object
 
 from .context import is_object_mode
 
@@ -28,3 +29,10 @@ def get_selected_faces() -> list[BMFace]:
         return []
     bm: BMesh = bmesh.from_edit_mesh(bpy.context.active_object.data)
     return [f for f in bm.faces if f.select]
+
+
+def remove_vertex_group(mesh_object: Object, vertex_group_name: str):
+    vgs = mesh_object.vertex_groups
+    vg = vgs.get(vertex_group_name)
+    if vg:
+        vgs.remove(vg)

@@ -12,6 +12,7 @@ from ..operators.armature import ToggleWeightPaintMode
 from ..operators.gpencil import SetStrokePlacement, SetBrushAndMaterial
 from ..operators.material import ClearUnusedMaterials, CopyMaterial, PasteMaterial, CreateAndAssignMaterial
 from ..operators.mesh import MergeCloseVertices, QuickMeshDeleteOperator, SelectBoundaryEdges
+from ..operators.modifier import CreateQuickLattice, ApplyQuickLattice, RemoveQuickLattice
 from ..operators.rigging import (
     GenerateRigFromArmature, RemoveGeneratedRig,
     AutoSkin,
@@ -70,7 +71,7 @@ GREASE_PENCIL_TOOL_INFOS = {
 }
 
 
-class SidePanelBase:
+class View3DSidePanelBase:
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "OB"
@@ -94,7 +95,7 @@ class SidePanelBase:
 #         selection_grid.operator('object.mode_set', text='Object', icon='NONE').mode='OBJECT'
 
 
-class ViewPanel(SidePanelBase, Panel):
+class ViewPanel(View3DSidePanelBase, Panel):
     bl_idname = "OB_PT_ViewPanel"
     bl_label = "View & Camera"
 
@@ -210,7 +211,7 @@ class ViewPanel(SidePanelBase, Panel):
 #             pivot_row.prop(tool_settings, "transform_pivot_point", text="", icon_only=False)
 
 
-class CreatePanel(SidePanelBase, Panel):
+class CreatePanel(View3DSidePanelBase, Panel):
     bl_idname = "OB_PT_CreatePanel"
     # bl_parent_id = MainPanel.bl_idname
     bl_label = "Create"
@@ -235,7 +236,7 @@ class CreatePanel(SidePanelBase, Panel):
         # meta_grid.operator("object.metaball_add", text="Ellipsoid", icon="NONE").type = "ELLIPSOID" # 타원체
 
 
-class EditPanel(SidePanelBase, Panel):
+class EditPanel(View3DSidePanelBase, Panel):
     bl_idname = "OB_PT_EditPanel"
     # bl_parent_id = MainPanel.bl_idname
     bl_label = "Edit"
@@ -248,6 +249,15 @@ class EditPanel(SidePanelBase, Panel):
         # origin_grid.operator('object.move_to_collection', text="Group (M)")
         origin_grid.operator('object.parent_set', text="Parent").type = "OBJECT"
         origin_grid.operator('object.parent_clear', text="Unparent").type = "CLEAR_KEEP_TRANSFORM"  # "CLEAR"
+
+        deform_grid = create_gridflow_at_layout(self.layout, columns=2)
+        deform_grid.operator(CreateQuickLattice.bl_idname, text="Lattice Local").orientation = "LOCAL"
+        deform_grid.operator(CreateQuickLattice.bl_idname, text="Lattice Normal").orientation = "NORMAL"
+        deform_grid.operator(ApplyQuickLattice.bl_idname, text="Apply Lattice")
+        deform_grid.operator(RemoveQuickLattice.bl_idname, text="Remove Lattice")
+        scale_cage_op = deform_grid.operator("wm.tool_set_by_id", text="Scale Cage")
+        scale_cage_op.name = "builtin.scale_cage"
+        scale_cage_op.cycle = True
 
         # Object Tools
         object_grid = create_gridflow_at_layout(self.layout, columns=2, header_text="")
@@ -321,7 +331,7 @@ class EditPanel(SidePanelBase, Panel):
         selection_grid.operator(SelectBoundaryEdges.bl_idname, text="SEL Boundary")
 
 
-class Riggingpanel(SidePanelBase, Panel):
+class Riggingpanel(View3DSidePanelBase, Panel):
     bl_idname = "OB_PT_RiggingPanel"
     bl_label = "Rigging"
 
@@ -355,7 +365,7 @@ class Riggingpanel(SidePanelBase, Panel):
         vertex_group_grid.operator(LoadObjectVertexGroups.bl_idname, text="Load")
 
 
-class NormalPanel(SidePanelBase, Panel):
+class NormalPanel(View3DSidePanelBase, Panel):
     bl_idname = "OB_PT_NormalPanel"
     bl_label = "Normal"
 
@@ -366,7 +376,7 @@ class NormalPanel(SidePanelBase, Panel):
         normal_tool_grid.operator("mesh.flip_normals", text="Reverse", icon="NONE")
 
 
-class UVPanel(SidePanelBase, Panel):
+class UVPanel(View3DSidePanelBase, Panel):
     bl_idname = "OB_PT_UVPanel"
     bl_label = "UV"
 
@@ -376,7 +386,7 @@ class UVPanel(SidePanelBase, Panel):
         uv_grid.operator("mesh.mark_seam", text="Clear Seam").clear = True
 
 
-class GreasePencilPanel(SidePanelBase, Panel):
+class GreasePencilPanel(View3DSidePanelBase, Panel):
     bl_idname = "OB_PT_GreasePencilPanel"
     bl_label = "Grease Pencil"
 
@@ -450,7 +460,7 @@ class GreasePencilPanel(SidePanelBase, Panel):
         # blue_marker.use_overlap_stroke = True
 
 
-class LookPanel(SidePanelBase, Panel):
+class LookPanel(View3DSidePanelBase, Panel):
     bl_idname = "OB_PT_LookPanel"
     bl_label = "Look"
 
@@ -477,11 +487,9 @@ class LookPanel(SidePanelBase, Panel):
         palette_grid.operator(CreateAndAssignMaterial.bl_idname, text="Checker").color = "CHECKER"
 
 
-class SystemPanel(SidePanelBase, Panel):
-    bl_idname = "OB_PT_SystemPanel"
-    bl_label = "System"
-
-    # bl_parent_id = MainPanel.bl_idname
+class OptimizationPanel(View3DSidePanelBase, Panel):
+    bl_idname = "OB_PT_OptimizationPanel"
+    bl_label = "Optimization"
 
     def draw(self, context):
         optimization_grid = create_gridflow_at_layout(self.layout, columns=1)
@@ -491,6 +499,12 @@ class SystemPanel(SidePanelBase, Panel):
         optimization_grid.operator(ClearUnusedMaterials.bl_idname, text="Cleanup Materials")
         optimization_grid.operator("outliner.orphans_purge", text="Cleanup Datablocks")
 
+
+class SystemPanel(View3DSidePanelBase, Panel):
+    bl_idname = "OB_PT_SystemPanel"
+    bl_label = "System"
+
+    def draw(self, context):
         system_grid = create_gridflow_at_layout(self.layout, columns=2)
         system_grid.operator('object.mode_set', text='Object Mode', icon='NONE').mode = 'OBJECT'
 

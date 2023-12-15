@@ -50,6 +50,16 @@ def _line_sort(item):
     return line
 
 
+def has_abstract_methods(cls):
+    """클래스에 추상메서드가 있는지 확인한다.
+    @asbtractmethod 데코레이터를 지정한 메서드가 있는 경우에 해당.
+    """
+    for name, method in inspect.getmembers(cls, predicate=inspect.isfunction):
+        if getattr(method, "__isabstractmethod__", False):
+            return True
+    return False
+
+
 def register_recursive(objects) -> None:
     """재귀적으로 블렌더 클래스 등록한다.
     """
@@ -67,7 +77,8 @@ def register_recursive(objects) -> None:
             #     register_recursive(value)
 
             # 해당 모듈에서 정의한 클래스인 경우 등록한다.
-            if inspect.isclass(value) and type(value).__name__ == "RNAMeta" and value.__module__ == current_module_name:
+            # 추상메서드@abstractmethod가 들어간 클래스의 경우는 등록하지 않는다.
+            if inspect.isclass(value) and type(value).__name__ == "RNAMeta" and value.__module__ == current_module_name and not has_abstract_methods(value):
                 print(f"RegisterClass: {current_module_name}.{key}")
                 bpy.utils.register_class(value)
 
@@ -102,7 +113,7 @@ def unregister_recursive(objects) -> None:
         for key, value in module_members:
 
             # 해당 모듈에서 정의한 클래스인 경우 등록 해제한다.
-            if inspect.isclass(value) and type(value).__name__ == "RNAMeta" and value.__module__ == current_module_name:
+            if inspect.isclass(value) and type(value).__name__ == "RNAMeta" and value.__module__ == current_module_name and not has_abstract_methods(value):
                 print(f"UnregisterClass :{current_module_name}.{key}")
                 bpy.utils.unregister_class(value)
 
