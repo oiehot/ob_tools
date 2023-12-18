@@ -23,6 +23,7 @@ from ..operators.scene import FixMeshNames, PrintAllHierarchy
 from ..operators.text import CreateText
 from ..operators.validate import ValidateScene
 from ..operators.viewport import SetViewportLightingMode, ToggleViewportCamera, ToggleViewportCavity
+from ..operators.render import SetRenderSettings, ExploreRenderOutputPath
 from ..utils import is_developer_mode
 
 MaterialInfo = namedtuple("GPencilMaterialInfo", "show_stroke show_fill stroke_color fill_color")
@@ -498,6 +499,19 @@ class OptimizationPanel(View3DSidePanelBase, Panel):
         optimization_grid.operator(FixMeshNames.bl_idname, text="Fix Mesh Names")
         optimization_grid.operator(ClearUnusedMaterials.bl_idname, text="Cleanup Materials")
         optimization_grid.operator("outliner.orphans_purge", text="Cleanup Datablocks")
+
+
+class RenderPanel(View3DSidePanelBase, Panel):
+    bl_idname = "OB_PT_RenderPanel"
+    bl_label = "Rendering"
+
+    def draw(self, context):
+        render_grid = create_gridflow_at_layout(self.layout, columns=3)
+        render_grid.operator("render.render", text="Render Still").write_still=True
+        render_grid.operator("render.render", text="Render Ani").animation=True
+        render_settings_grid = create_gridflow_at_layout(self.layout, columns=1)
+        render_settings_grid.operator(ExploreRenderOutputPath.bl_idname, text="Open Output Path")
+        render_settings_grid.operator(SetRenderSettings.bl_idname, text="Set Default Settings").mode="DEFAULT"
 
 
 class SystemPanel(View3DSidePanelBase, Panel):

@@ -13,6 +13,7 @@ from . import (
     gpencil,
     text,
     modifier,
+    render,
 )
 
 REGISTER_CLASSES = (
@@ -30,4 +31,5 @@ REGISTER_CLASSES = (
     gpencil,
     text,
     modifier,
+    render,
 )
