@@ -78,7 +78,9 @@ def register_recursive(objects) -> None:
 
             # 해당 모듈에서 정의한 클래스인 경우 등록한다.
             # 추상메서드@abstractmethod가 들어간 클래스의 경우는 등록하지 않는다.
-            if inspect.isclass(value) and type(value).__name__ == "RNAMeta" and value.__module__ == current_module_name and not has_abstract_methods(value):
+            if inspect.isclass(value) and type(
+                    value).__name__ == "RNAMeta" and value.__module__ == current_module_name and not has_abstract_methods(
+                    value):
                 print(f"RegisterClass: {current_module_name}.{key}")
                 bpy.utils.register_class(value)
 
@@ -113,7 +115,9 @@ def unregister_recursive(objects) -> None:
         for key, value in module_members:
 
             # 해당 모듈에서 정의한 클래스인 경우 등록 해제한다.
-            if inspect.isclass(value) and type(value).__name__ == "RNAMeta" and value.__module__ == current_module_name and not has_abstract_methods(value):
+            if inspect.isclass(value) and type(
+                    value).__name__ == "RNAMeta" and value.__module__ == current_module_name and not has_abstract_methods(
+                    value):
                 print(f"UnregisterClass :{current_module_name}.{key}")
                 bpy.utils.unregister_class(value)
 

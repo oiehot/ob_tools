@@ -9,10 +9,12 @@ from ..functions.gpencil import is_current_grease_pencil_brush_name, is_grease_p
 from ..functions.ui import create_gridflow_at_layout
 from ..operators.align import AlignAxisAverageOperator, AlignAxisMinMaxOperator
 from ..operators.armature import ToggleWeightPaintMode
+from ..operators.bake import QuickBakeNormal
 from ..operators.gpencil import SetStrokePlacement, SetBrushAndMaterial
 from ..operators.material import ClearUnusedMaterials, CopyMaterial, PasteMaterial, CreateAndAssignMaterial
 from ..operators.mesh import MergeCloseVertices, QuickMeshDeleteOperator, SelectBoundaryEdges
 from ..operators.modifier import CreateQuickLattice, ApplyQuickLattice, RemoveQuickLattice
+from ..operators.render import SetRenderSettings, ExploreRenderOutputPath
 from ..operators.rigging import (
     GenerateRigFromArmature, RemoveGeneratedRig,
     AutoSkin,
@@ -23,7 +25,6 @@ from ..operators.scene import FixMeshNames, PrintAllHierarchy
 from ..operators.text import CreateText
 from ..operators.validate import ValidateScene
 from ..operators.viewport import SetViewportLightingMode, ToggleViewportCamera, ToggleViewportCavity
-from ..operators.render import SetRenderSettings, ExploreRenderOutputPath
 from ..utils import is_developer_mode
 
 MaterialInfo = namedtuple("GPencilMaterialInfo", "show_stroke show_fill stroke_color fill_color")
@@ -374,7 +375,13 @@ class NormalPanel(View3DSidePanelBase, Panel):
         normal_tool_grid = create_gridflow_at_layout(self.layout, columns=2)
         normal_tool_grid.operator("mesh.mark_sharp", text="Mark Sharp")
         normal_tool_grid.operator("mesh.mark_sharp", text="Clear Sharp").clear = True
-        normal_tool_grid.operator("mesh.flip_normals", text="Reverse", icon="NONE")
+        normal_tool_grid.operator("mesh.flip_normals", text="Reverse")
+        bake_grid = create_gridflow_at_layout(self.layout, columns=1)
+        # Bake Normal 오퍼레이터는 UI를 통해서 실행시켜야 한다.
+        # 개별 Operator에서는 operator_context를 사용할 수 없었기 때문에
+        # grid_flow의 컨텍스트를 INVOKE_DEFAULT로 설정해야 한다.
+        bake_grid.operator_context = "INVOKE_DEFAULT"
+        bake_grid.operator(QuickBakeNormal.bl_idname, text="Bake Normal")
 
 
 class UVPanel(View3DSidePanelBase, Panel):
@@ -507,11 +514,11 @@ class RenderPanel(View3DSidePanelBase, Panel):
 
     def draw(self, context):
         render_grid = create_gridflow_at_layout(self.layout, columns=3)
-        render_grid.operator("render.render", text="Render Still").write_still=True
-        render_grid.operator("render.render", text="Render Ani").animation=True
+        render_grid.operator("render.render", text="Render Still").write_still = True
+        render_grid.operator("render.render", text="Render Ani").animation = True
         render_settings_grid = create_gridflow_at_layout(self.layout, columns=1)
         render_settings_grid.operator(ExploreRenderOutputPath.bl_idname, text="Open Output Path")
-        render_settings_grid.operator(SetRenderSettings.bl_idname, text="Set Default Settings").mode="DEFAULT"
+        render_settings_grid.operator(SetRenderSettings.bl_idname, text="Set Default Settings").mode = "DEFAULT"
 
 
 class SystemPanel(View3DSidePanelBase, Panel):

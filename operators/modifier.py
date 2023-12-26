@@ -1,8 +1,8 @@
 from abc import abstractmethod
 
 import bpy
+from bpy.props import EnumProperty, IntProperty, FloatProperty
 from bpy.types import Object, Operator, LatticeModifier
-from bpy.props import EnumProperty, IntProperty,FloatProperty
 
 from ..functions.context import is_object_mode, is_editmesh_mode, get_selected_objects
 from ..functions.mesh import remove_vertex_group
@@ -106,7 +106,7 @@ class CreateQuickLattice(Operator):
         ),
         default="NORMAL"
     )
-    resolution_u: IntProperty(name="U",default=3, min=2)
+    resolution_u: IntProperty(name="U", default=3, min=2)
     resolution_v: IntProperty(name="V", default=3, min=2)
     resolution_w: IntProperty(name="W", default=3, min=2)
     rotation_x: FloatProperty(name="X", subtype="ANGLE", default=0.0, step=100.0, precision=4, options={"SKIP_SAVE"})

@@ -1,7 +1,8 @@
 import os
-import bpy
-from bpy.types import Operator
+
 from bpy.props import EnumProperty
+from bpy.types import Operator
+
 from ..utils.file import explore_path
 
 
@@ -19,13 +20,11 @@ class SetRenderSettings(Operator):
         default="DEFAULT"
     )
 
-
     @classmethod
     def poll(cls, context):
         scene = context.scene
         render = scene.render
         return True if scene and render else False
-
 
     def execute(self, context):
         scene = context.scene
@@ -46,7 +45,7 @@ class SetRenderSettings(Operator):
                 render.use_multiview = False  # Stereoscopy
 
                 # Output
-                #render.filepath = "d:/tmp/test_####"
+                # render.filepath = "d:/tmp/test_####"
                 render.use_file_extension = True
                 render.use_render_cache = False
                 render.use_overwrite = True
@@ -92,14 +91,12 @@ class ExploreRenderOutputPath(Operator):
     bl_idname = "render.explore_render_output_path"
     bl_label = "Explore Render Output Path"
 
-
     @classmethod
     def poll(cls, context):
         scene = context.scene
         render = scene.render
         output_path = render.filepath
         return True if output_path and output_path != "" else False
-
 
     def execute(self, context):
         output_path: str = context.scene.render.filepath

@@ -14,6 +14,7 @@ from . import (
     text,
     modifier,
     render,
+    bake,
 )
 
 REGISTER_CLASSES = (
@@ -32,4 +33,5 @@ REGISTER_CLASSES = (
     text,
     modifier,
     render,
+    bake,
 )
