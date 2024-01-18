@@ -80,23 +80,6 @@ class View3DSidePanelBase:
     bl_options = {"DEFAULT_CLOSED"}
 
 
-# class SelectionPanel(SidePanelBase, Panel):
-#     bl_idname = "OB_PT_SelectionPanel"
-#     bl_label = "Selection"
-#     # bl_parent_id = MainPanel.bl_idname
-#
-#     @classmethod
-#     def poll(cls, context):
-#         return False
-#
-#     def draw(self, context):
-#         selection_grid = _get_gridflow(self.layout, columns=3)
-#         selection_grid.operator(SwitchModeOperator.bl_idname, text='Vertex', icon='NONE').selection = 'VERT'
-#         selection_grid.operator(SwitchModeOperator.bl_idname, text='Edge', icon='NONE').selection = 'EDGE'
-#         selection_grid.operator(SwitchModeOperator.bl_idname, text='Face', icon='NONE').selection = 'FACE'
-#         selection_grid.operator('object.mode_set', text='Object', icon='NONE').mode='OBJECT'
-
-
 class ViewPanel(View3DSidePanelBase, Panel):
     bl_idname = "OB_PT_ViewPanel"
     bl_label = "View & Camera"
@@ -238,6 +221,27 @@ class CreatePanel(View3DSidePanelBase, Panel):
         # meta_grid.operator("object.metaball_add", text="Ellipsoid", icon="NONE").type = "ELLIPSOID" # 타원체
 
 
+class SelectionPanel(View3DSidePanelBase, Panel):
+    bl_idname = "OB_PT_SelectionPanel"
+    bl_label = "Selection"
+    # bl_parent_id = MainPanel.bl_idname
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def draw(self, context):
+        selection_grid = create_gridflow_at_layout(self.layout, columns=3)
+        # selection_grid.operator(SwitchModeOperator.bl_idname, text='Vertex', icon='NONE').selection = 'VERT'
+        # selection_grid.operator(SwitchModeOperator.bl_idname, text='Edge', icon='NONE').selection = 'EDGE'
+        # selection_grid.operator(SwitchModeOperator.bl_idname, text='Face', icon='NONE').selection = 'FACE'
+        # selection_grid.operator('object.mode_set', text='Object', icon='NONE').mode='OBJECT'
+        selection_grid.operator("wm.tool_set_by_id", text="Box").name = "builtin.select_box"
+        selection_grid.operator("mesh.select_linked", text="Linked")
+        selection_grid.operator(SelectBoundaryEdges.bl_idname, text="Boundary")
+        selection_grid.operator("mesh.select_less", text="Less")
+        selection_grid.operator("mesh.select_more", text="More")
+
 class EditPanel(View3DSidePanelBase, Panel):
     bl_idname = "OB_PT_EditPanel"
     # bl_parent_id = MainPanel.bl_idname
@@ -252,15 +256,6 @@ class EditPanel(View3DSidePanelBase, Panel):
         origin_grid.operator('object.parent_set', text="Parent").type = "OBJECT"
         origin_grid.operator('object.parent_clear', text="Unparent").type = "CLEAR_KEEP_TRANSFORM"  # "CLEAR"
 
-        deform_grid = create_gridflow_at_layout(self.layout, columns=2)
-        deform_grid.operator(CreateQuickLattice.bl_idname, text="Lattice Local").orientation = "LOCAL"
-        deform_grid.operator(CreateQuickLattice.bl_idname, text="Lattice Normal").orientation = "NORMAL"
-        deform_grid.operator(ApplyQuickLattice.bl_idname, text="Apply Lattice")
-        deform_grid.operator(RemoveQuickLattice.bl_idname, text="Remove Lattice")
-        scale_cage_op = deform_grid.operator("wm.tool_set_by_id", text="Scale Cage")
-        scale_cage_op.name = "builtin.scale_cage"
-        scale_cage_op.cycle = True
-
         # Object Tools
         object_grid = create_gridflow_at_layout(self.layout, columns=2, header_text="")
         object_grid.enabled = is_object_mode() and has_selected_objects()
@@ -272,26 +267,30 @@ class EditPanel(View3DSidePanelBase, Panel):
 
         # Common Tools
         common_grid = create_gridflow_at_layout(self.layout, columns=2, header_text="")
+        # 만드는 기능
+        common_grid.operator("wm.tool_set_by_id", text="PolyBuild").name="builtin.poly_build"
+        common_grid.operator('view3d.edit_mesh_extrude_move_normal', text="Extrude")  # Ctrl+RMB 로 커브형 Extrude 가능함.
+        common_grid.operator('mesh.edge_face_add', text="Fill")
+        # 자르고 떼는 기능
+        common_grid.operator("wm.tool_set_by_id", text="Knife").name="builtin.knife"  # common_grid.operator("mesh.knife_tool", text="Knife")
+        common_grid.operator("wm.tool_set_by_id", text="Rip").name="builtin.rip_region"  # common_grid.operator("mesh.rip", text="Rip")
+        common_grid.operator('mesh.split', text='Extract', icon='NONE')
+        # 합치거나 지우는 기능
         common_grid.operator('mesh.merge', text='Merge', icon='NONE').type = 'CENTER'
         common_grid.operator(MergeCloseVertices.bl_idname, text='Merge Near', icon='NONE')
-        common_grid.operator('mesh.split', text='Extract', icon='NONE')
-        common_grid.operator(QuickMeshDeleteOperator.bl_idname, text='Delete', icon='NONE')
-        common_grid.operator('view3d.edit_mesh_extrude_move_normal', text="Extrude",
-                             icon='NONE')  # Ctrl+RMB 로 커브형 Extrude 가능함.
-        common_grid.operator('mesh.edge_face_add', text="Fill")
+        common_grid.operator(QuickMeshDeleteOperator.bl_idname, text="Delete")
 
         # Vertex Tools
-        vertex_grid = create_gridflow_at_layout(self.layout, header_text="")
+        vertex_grid = create_gridflow_at_layout(self.layout, columns=1, header_text="")
         vertex_grid.operator('mesh.vert_connect_path', text='V ConnectPath', icon='NONE')
 
         # Edge Tools
-        edge_grid = create_gridflow_at_layout(self.layout, header_text="")
-        edge_grid.operator('mesh.bevel', text='E Bevel', icon='NONE').affect = 'EDGES'
-        edge_grid.operator('transform.edge_slide', text='E Slide', icon='NONE')
-        edge_grid.operator('mesh.loopcut_slide', text='E /', icon='NONE')
+        edge_grid = create_gridflow_at_layout(self.layout, columns=2, header_text="")
+        edge_grid.operator('wm.tool_set_by_id',text='E /').name = "builtin.loop_cut"  # edge_grid.operator('mesh.loopcut_slide', text='E /', icon='NONE')
         edge_grid.operator('mesh.offset_edge_loops_slide', text="E //", icon='NONE')
-        edge_grid.operator('mesh.knife_tool', text="E Knife", icon='NONE')
-        edge_grid.operator("mesh.rip", text="E Rip")
+        edge_grid.operator('mesh.bevel', text='E Bevel', icon='NONE').affect = 'EDGES'
+        #edge_grid.operator("wm.tool_set_by_id", text="E Knife").name="builtin.knife"  # common_grid.operator("mesh.knife_tool", text="E Knife")
+        edge_grid.operator('transform.edge_slide', text='E Slide', icon='NONE')
 
         # Face Tools
         face_grid = create_gridflow_at_layout(self.layout, header_text="")
@@ -301,6 +300,8 @@ class EditPanel(View3DSidePanelBase, Panel):
         face_separate = face_grid.operator('mesh.separate', text='F Separate', icon='NONE')
         face_separate.type = 'SELECTED'
         # face_separate.enabled = is_edit_mode()
+
+        # Tools
 
         # Vertex Alignment
         VA_EMBOSS: bool = False
@@ -327,10 +328,15 @@ class EditPanel(View3DSidePanelBase, Panel):
         z_min.axis = 'Z'
         z_min.side = 'NEGATIVE'
 
-        # Selection Tools
-        selection_grid = create_gridflow_at_layout(self.layout, header_text="")
-        selection_grid.operator("mesh.select_linked", text="SEL Linked")
-        selection_grid.operator(SelectBoundaryEdges.bl_idname, text="SEL Boundary")
+        # Deform Tools
+        deform_grid = create_gridflow_at_layout(self.layout, columns=2)
+        deform_grid.operator(CreateQuickLattice.bl_idname, text="Lattice Local").orientation = "LOCAL"
+        deform_grid.operator(CreateQuickLattice.bl_idname, text="Lattice Normal").orientation = "NORMAL"
+        deform_grid.operator(ApplyQuickLattice.bl_idname, text="Apply Lattice")
+        deform_grid.operator(RemoveQuickLattice.bl_idname, text="Remove Lattice")
+        scale_cage_op = deform_grid.operator("wm.tool_set_by_id", text="Scale Cage")
+        scale_cage_op.name = "builtin.scale_cage"
+        scale_cage_op.cycle = True
 
 
 class Riggingpanel(View3DSidePanelBase, Panel):
