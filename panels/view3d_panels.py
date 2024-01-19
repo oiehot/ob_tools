@@ -25,6 +25,8 @@ from ..operators.scene import FixMeshNames, PrintAllHierarchy
 from ..operators.text import CreateText
 from ..operators.validate import ValidateScene
 from ..operators.viewport import SetViewportLightingMode, ToggleViewportCamera, ToggleViewportCavity
+from ..operators.measure import SetEditModeOverlayType
+from ..functions.viewport import get_editmode_overlay_type
 from ..utils import is_developer_mode
 
 MaterialInfo = namedtuple("GPencilMaterialInfo", "show_stroke show_fill stroke_color fill_color")
@@ -140,6 +142,10 @@ class ViewPanel(View3DSidePanelBase, Panel):
         viewport_grid.prop(overlay, "show_edge_seams", text="Seams", toggle=True)
         viewport_grid.prop(shading, "show_backface_culling", text="BackCull", toggle=True)
         viewport_grid.prop(overlay, "show_face_orientation", text="Orient", toggle=True)
+
+        editmode_overlay_grid = create_gridflow_at_layout(self.layout, columns=3)
+        for MODE in ["DEFAULT", "MEASURE", "INTERSECT", "DISTORT", "DEVELOP"]:
+            editmode_overlay_grid.operator(SetEditModeOverlayType.bl_idname, text=MODE.capitalize(), depress=get_editmode_overlay_type(context) == MODE).mode = MODE
 
         lighting_grid = create_gridflow_at_layout(self.layout, columns=3)
         lighting_grid.operator(SetViewportLightingMode.bl_idname, text="Default Lit",
