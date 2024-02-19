@@ -1,0 +1,2 @@
+python gn.py snow --input-blender=d:/tmp/GN_Snow.blend --input-fbx=d:/tmp/input.fbx --output-fbx=d:/tmp/output.fbx --geometry-node=GN_Snow --density=5000 --voxel-size=0.02 --decimate --decimate-ratio=0.1
+python gn.py snow --input-blender=d:/tmp/GN_Snow.blend --input-fbx=d:/tmp/monkey.fbx --output-fbx=d:/tmp/monkey_output.fbx --geometry-node=GN_Snow --density=500000 --voxel-size=0.01
