@@ -117,7 +117,7 @@ def make_snow(input_blender_path:str, geometry_node_name: str, input_fbx_path: s
 
     _log.info(f"Set Desnity to {snow_modifier[density_id]}")
     _log.info(f"Set VoxelSize to {snow_modifier[voxel_size_id]}")
-    _log.info(f"Set TargetCollection to {snow_modifier[target_collection_id]}")
+    _log.info(f"Set TargetCollection to {snow_modifier[target_collection_id].name}")
 
     if decimate:
         _log.info(f"Add Decimate Modifier to SnowEmitterPlane")
