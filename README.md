@@ -27,7 +27,7 @@ git clone https://github.com/oiehot/ob_tools.git d:/ob_tools
 2) 클론한 디렉토리를 블렌더 addons 폴더로 Junction 링크 (관리자 권한 필요)
 
 ```sh
-mklink /j "C:/Program Files/Blender Foundation/Blender 4.0/4.0/scripts/addons/ob_tools" "D:/ob_tools"
+mklink /j "C:/Program Files/Blender Foundation/Blender 4.1/4.1/scripts/addons/ob_tools" "D:/ob_tools"
 ```
 
-3) 블렌더 시작 후 Preferences > Add-ons 에서 ob_tools로 검색한 뒤 켜기.
+3) 블렌더 시작 후 Preferences > Add-ons 에서 OB Tools로 검색한 뒤 켜기.
