@@ -248,6 +248,25 @@ class SelectionPanel(View3DSidePanelBase, Panel):
         selection_grid.operator("mesh.select_less", text="Less")
         selection_grid.operator("mesh.select_more", text="More")
 
+
+class ObjectPanel(View3DSidePanelBase, Panel):
+    bl_idname = "OB_PT_ObjectPanel"
+    bl_label = "Object"
+    # bl_parent_id = MainPanel.bl_idname
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def draw(self, context):
+        obj = context.object
+        grid = create_gridflow_at_layout(self.layout, columns=3)
+        grid.prop(obj, "show_name", text="Name", toggle=True)
+        grid.prop(obj, "show_axis", text="Axis", toggle=True)
+        grid.prop(obj, "show_wire", text="Wire", toggle=True)
+        grid.prop(obj, "show_in_front", text="In Front", toggle=True)
+
+
 class EditPanel(View3DSidePanelBase, Panel):
     bl_idname = "OB_PT_EditPanel"
     # bl_parent_id = MainPanel.bl_idname
@@ -324,6 +343,9 @@ class EditPanel(View3DSidePanelBase, Panel):
         va_grid.operator(AlignAxisAverageOperator.bl_idname, text='X', icon='NONE').axis = 'X'
         va_grid.operator(AlignAxisAverageOperator.bl_idname, text='Y', icon='NONE').axis = 'Y'
         va_grid.operator(AlignAxisAverageOperator.bl_idname, text='Z Up', icon='NONE').axis = 'Z'
+        va_grid.operator(AlignAxisAverageOperator.bl_idname, text='X0', icon='NONE') # TODO
+        va_grid.operator(AlignAxisAverageOperator.bl_idname, text='Y0', icon='NONE') # TODO
+        va_grid.operator(AlignAxisAverageOperator.bl_idname, text='Z0', icon='NONE') # TODO
         x_min = va_grid.operator(AlignAxisMinMaxOperator.bl_idname, text='-', icon='NONE', emboss=VA_EMBOSS)
         x_min.axis = 'X'
         x_min.side = 'NEGATIVE'
