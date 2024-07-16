@@ -144,7 +144,7 @@ class ViewPanel(View3DSidePanelBase, Panel):
         viewport_grid.prop(overlay, "show_face_orientation", text="Orient", toggle=True)
 
         editmode_overlay_grid = create_gridflow_at_layout(self.layout, columns=3)
-        for MODE in ["DEFAULT", "MEASURE", "INTERSECT", "DISTORT", "DEVELOP"]:
+        for MODE in ["DEFAULT", "RETOPO", "MEASURE", "INTERSECT", "DISTORT", "DEVELOP"]:
             editmode_overlay_grid.operator(SetEditModeOverlayType.bl_idname, text=MODE.capitalize(), depress=get_editmode_overlay_type(context) == MODE).mode = MODE
 
         lighting_grid = create_gridflow_at_layout(self.layout, columns=3)
@@ -237,17 +237,20 @@ class SelectionPanel(View3DSidePanelBase, Panel):
         return True
 
     def draw(self, context):
-        selection_grid = create_gridflow_at_layout(self.layout, columns=3)
-        # selection_grid.operator(SwitchModeOperator.bl_idname, text='Vertex', icon='NONE').selection = 'VERT'
-        # selection_grid.operator(SwitchModeOperator.bl_idname, text='Edge', icon='NONE').selection = 'EDGE'
-        # selection_grid.operator(SwitchModeOperator.bl_idname, text='Face', icon='NONE').selection = 'FACE'
+        grid = create_gridflow_at_layout(self.layout, columns=2)
         # selection_grid.operator('object.mode_set', text='Object', icon='NONE').mode='OBJECT'
-        selection_grid.operator("wm.tool_set_by_id", text="Box").name = "builtin.select_box"
-        selection_grid.operator("mesh.select_linked", text="Linked")
-        selection_grid.operator(SelectBoundaryEdges.bl_idname, text="Boundary")
-        selection_grid.operator("mesh.select_less", text="Less")
-        selection_grid.operator("mesh.select_more", text="More")
+        # grid.operator("wm.tool_set_by_id", text="Box").name = "builtin.select_box"
+        ngon_op = grid.operator("mesh.select_face_by_sides", text="N-Gon")
+        ngon_op.number = 4
+        ngon_op.type = "NOTEQUAL"
+        ngon_op.extend = True
+        grid.label()
 
+        grid.operator("mesh.select_linked", text="Linked")
+        grid.operator(SelectBoundaryEdges.bl_idname, text="Boundary")
+
+        grid.operator("mesh.select_less", text="Less")
+        grid.operator("mesh.select_more", text="More")
 
 class ObjectPanel(View3DSidePanelBase, Panel):
     bl_idname = "OB_PT_ObjectPanel"

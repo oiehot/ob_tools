@@ -15,6 +15,7 @@ class SetEditModeOverlayType(Operator):
         name="Mode",
         items=(
             ("DEFAULT", "Default", "Default Mode"),
+            ("RETOPO", "Retopology", "Retopology Mode"),
             ("MEASURE", "Measure", "Measure Mode"),
             ("INTERSECT", "Intersect", "Intersect Analysis Mode"),
             ("DISTORT", "Distortion", "Distortion Analysis Mode"),

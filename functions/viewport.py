@@ -18,7 +18,7 @@ def set_editmode_overlay_type(context, mode: str):
     statvis = context.scene.tool_settings.statvis
 
     # 기본 설정
-    overlay.show_edges = True
+    # overlay.show_edges = True
     overlay.show_faces = True
     overlay.show_face_center = False
 
@@ -61,6 +61,9 @@ def set_editmode_overlay_type(context, mode: str):
             statvis.type = "DISTORT"
             statvis.distort_min = 0.0872665
             statvis.distort_max = 0.785398
+        case "RETOPO":
+            overlay.show_retopology = True
+            overlay.retopology_offset = 0.2
         case "DEVELOP":
             overlay.show_extra_indices = True
             pass
@@ -71,7 +74,9 @@ def get_editmode_overlay_type(context) -> str:
     """
     overlay = context.space_data.overlay
     statvis = context.scene.tool_settings.statvis
-    if overlay.show_face_center and overlay.show_extra_edge_length and overlay.show_vertex_normals:
+    if overlay.show_retopology:
+        return "RETOPO"
+    elif overlay.show_face_center and overlay.show_extra_edge_length and overlay.show_vertex_normals:
         return "MEASURE"
     elif overlay.show_statvis and statvis.type == "INTERSECT":
         return "INTERSECT"
