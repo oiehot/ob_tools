@@ -1,5 +1,6 @@
-import inspect
+import inspect # TODO: 블렌더 4.2에서 반복 리로드 하면 inspect를 사용하는 부분에서 예외가 발생하면서 튕긴다.
 import sys
+from abc import ABC
 from os.path import basename, dirname
 
 import bpy
@@ -50,15 +51,15 @@ def _line_sort(item):
     return line
 
 
-def has_abstract_methods(cls):
-    """클래스에 추상메서드가 있는지 확인한다.
-    @asbtractmethod 데코레이터를 지정한 메서드가 있는 경우에 해당.
-    """
-    for name, method in inspect.getmembers(cls, predicate=inspect.isfunction):
-        if getattr(method, "__isabstractmethod__", False):
+def is_abstract_class(cls):
+    return issubclass(cls, ABC) and bool(getattr(cls, "__abstractmethods__", False))
+
+def has_abstract_method(cls):
+    for name in dir(cls):
+        attr = getattr(cls, name)
+        if callable(attr) and getattr(attr, "__isabstractmethod__", False):
             return True
     return False
-
 
 def register_recursive(objects) -> None:
     """재귀적으로 블렌더 클래스 등록한다.
@@ -77,9 +78,9 @@ def register_recursive(objects) -> None:
             #     register_recursive(value)
 
             # 해당 모듈에서 정의한 클래스인 경우 등록한다.
-            # 추상메서드@abstractmethod가 들어간 클래스의 경우는 등록하지 않는다.
+            # 추상 클래스(ABC, @abstractmethod)의 경우는 등록하지 않는다.
             if inspect.isclass(value) and type(
-                    value).__name__ == "RNAMeta" and value.__module__ == current_module_name and not has_abstract_methods(
+                    value).__name__ == "RNAMeta" and value.__module__ == current_module_name and not has_abstract_method(
                     value):
                 print(f"RegisterClass: {current_module_name}.{key}")
                 bpy.utils.register_class(value)
@@ -116,7 +117,7 @@ def unregister_recursive(objects) -> None:
 
             # 해당 모듈에서 정의한 클래스인 경우 등록 해제한다.
             if inspect.isclass(value) and type(
-                    value).__name__ == "RNAMeta" and value.__module__ == current_module_name and not has_abstract_methods(
+                    value).__name__ == "RNAMeta" and value.__module__ == current_module_name and not has_abstract_method(
                     value):
                 print(f"UnregisterClass :{current_module_name}.{key}")
                 bpy.utils.unregister_class(value)

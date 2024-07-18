@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 import bpy
 from bpy.props import EnumProperty, IntProperty, FloatProperty

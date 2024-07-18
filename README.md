@@ -16,18 +16,25 @@
 
 ## 설치
 
-### 윈도우 (개발자)
+1) Preferences > Get Extensions > Add Local Repository
 
-1) 적절한 경로로 클론.
-
-```sh
-git clone https://github.com/oiehot/ob_tools.git d:/ob_tools
+```yaml
+Name: OIEHOT Blender Repo
+Custom Directory: True, d:/blender
+Source: User
+Module: oiehot
 ```
 
-2) 클론한 디렉토리를 블렌더 addons 폴더로 Junction 링크 (관리자 권한 필요)
+2) 블렌더 익스텐션 저장소 디렉토리로 클론.
 
 ```sh
-mklink /j "C:/Program Files/Blender Foundation/Blender 4.1/4.1/scripts/addons/ob_tools" "D:/ob_tools"
+git clone https://github.com/oiehot/ob_tools.git d:/blender/ob_tools
 ```
 
-3) 블렌더 시작 후 Preferences > Add-ons 에서 OB Tools로 검색한 뒤 켜기.
+3) Preferences > Get Extensions > Refresh Local
+
+4) Installed 에 OB Tools 이 있는 확인하기.
+
+5) Preferences > Add-ons > OB Tools 켜기.
+
+6) 오른쪽 사이드 바에서 OB 탭이 있는지 확인하기.
