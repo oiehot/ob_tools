@@ -50,14 +50,18 @@ def _line_sort(item):
         return 0
     return line
 
+def is_blender_operator_class(cls):
+    if getattr(cls, "bl_idname", False):
+        return True
+    return False
 
 def is_abstract_class(cls):
     return issubclass(cls, ABC) and bool(getattr(cls, "__abstractmethods__", False))
 
 def has_abstract_method(cls):
-    for name in dir(cls):
-        attr = getattr(cls, name)
-        if callable(attr) and getattr(attr, "__isabstractmethod__", False):
+    for attr_name in dir(cls):
+        attr = getattr(cls, attr_name)
+        if callable(attr) and bool(getattr(attr, "__isabstractmethod__", False)):
             return True
     return False
 
@@ -79,9 +83,11 @@ def register_recursive(objects) -> None:
 
             # 해당 모듈에서 정의한 클래스인 경우 등록한다.
             # 추상 클래스(ABC, @abstractmethod)의 경우는 등록하지 않는다.
-            if inspect.isclass(value) and type(
-                    value).__name__ == "RNAMeta" and value.__module__ == current_module_name and not has_abstract_method(
-                    value):
+            if inspect.isclass(value) \
+                    and type(value).__name__ == "RNAMeta" \
+                    and value.__module__ == current_module_name \
+                    and is_blender_operator_class(value):
+                    # and not has_abstract_method(value):  # 4.2.0에서 EXCEPTION_ACCESS_VIOLATION를 발생하므로 생략.
                 print(f"RegisterClass: {current_module_name}.{key}")
                 bpy.utils.register_class(value)
 
@@ -116,13 +122,15 @@ def unregister_recursive(objects) -> None:
         for key, value in module_members:
 
             # 해당 모듈에서 정의한 클래스인 경우 등록 해제한다.
-            if inspect.isclass(value) and type(
-                    value).__name__ == "RNAMeta" and value.__module__ == current_module_name and not has_abstract_method(
-                    value):
-                print(f"UnregisterClass :{current_module_name}.{key}")
+            if inspect.isclass(value) \
+                and type(value).__name__ == "RNAMeta" \
+                and value.__module__ == current_module_name \
+                and is_blender_operator_class(value):
+                # and not has_abstract_method(value):  # 4.2.0에서 EXCEPTION_ACCESS_VIOLATION를 발생하므로 생략.
+                print(f"UnregisterClass: {current_module_name}.{key}")
                 bpy.utils.unregister_class(value)
 
-            # 모듈에 unregister 함수가 있는 겨우 실행한다.
+            # 모듈에 unregister 함수가 있는 경우 실행한다.
             if key == "unregister" and callable(value):
                 value()
 
