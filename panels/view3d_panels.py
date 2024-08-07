@@ -21,7 +21,7 @@ from ..operators.rigging import (
     DetachRigMesh, AttachRigMesh,
     SaveObjectVertexGroups, LoadObjectVertexGroups
 )
-from ..operators.scene import FixMeshNames, PrintAllHierarchy
+from ..operators.scene import FixDataNames, PrintAllHierarchy
 from ..operators.text import CreateText
 from ..operators.validate import ValidateScene
 from ..operators.viewport import SetViewportLightingMode, ToggleViewportCamera, ToggleViewportCavity
@@ -540,7 +540,7 @@ class OptimizationPanel(View3DSidePanelBase, Panel):
         optimization_grid = create_gridflow_at_layout(self.layout, columns=1)
         optimization_grid.operator(PrintAllHierarchy.bl_idname, text="Print Hierarchy")
         optimization_grid.operator(ValidateScene.bl_idname, text="Validate Scene")
-        optimization_grid.operator(FixMeshNames.bl_idname, text="Fix Mesh Names")
+        optimization_grid.operator(FixDataNames.bl_idname, text="Fix Data Names")
         optimization_grid.operator(ClearUnusedMaterials.bl_idname, text="Cleanup Materials")
         optimization_grid.operator("outliner.orphans_purge", text="Cleanup Datablocks")
 
