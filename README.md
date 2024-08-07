@@ -12,7 +12,10 @@
 * 웨이트 페인트를 편하게 하기 위한 모드 스위칭.
 * 프로토타입 모델링 편의를 위한 재질 Copy&Paste
 
-...등이 있습니다.
+호환성
+
+* 블렌더 4.2 이상
+
 
 ## 설치
 
@@ -28,7 +31,7 @@ Module: oiehot
 2) 블렌더 익스텐션 저장소 디렉토리로 클론.
 
 ```sh
-git clone https://github.com/oiehot/ob_tools.git d:/blender/ob_tools
+$ git clone https://github.com/oiehot/ob_tools.git d:/blender/ob_tools
 ```
 
 3) Preferences > Get Extensions > Refresh Local
