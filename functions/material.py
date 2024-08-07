@@ -4,6 +4,16 @@ import bpy
 from bpy.types import Object, Material, Image, ShaderNodeTree, ShaderNode
 
 
+def has_materials_data(obj: Object) -> bool:
+    """재질 정보가 있는 데이터를 가진 오브젝트인가?
+    """
+    data = getattr(obj, "data", None)
+    if data:
+        materials = getattr(data, "materials", None)
+        if materials:
+            return True
+    return False
+
 def has_material(name: str) -> bool:
     return True if name in bpy.data.materials else False
 

@@ -8,7 +8,7 @@ from ..functions.context import (
 )
 from ..functions.material import (
     get_material, get_random_rgba_tuple,
-    has_material,
+    has_materials_data, has_material,
 )
 from ..functions.viewport import update_viewport
 
@@ -32,6 +32,10 @@ class CopyMaterial(Operator):
             return {"CANCELLED"}
 
         obj = context.selected_objects[0]
+
+        if not has_materials_data(obj):
+            return {"CANCELLED"}
+
         for material in obj.data.materials:
             materials.append(material)
 
@@ -64,10 +68,12 @@ class PasteMaterial(Operator):
         selected_objects = bpy.context.selected_objects
         first_material: Material = materials[0]
         for obj in selected_objects:
-            if obj.type == "MESH":
-                print(f"Paste Material: {first_material.name} => {obj.name}")
-                obj.data.materials.clear()
-                obj.data.materials.append(first_material)
+            if not has_materials_data(obj):
+                print(f"Paste Material: {obj.name} has no materials property => SKIP")
+                continue
+            print(f"Paste Material: {first_material.name} => {obj.name}")
+            obj.data.materials.clear()
+            obj.data.materials.append(first_material)
 
         # 재질 수정 후 변화를 즉시 반영하기 위해 뷰포트를 업데이트 한다.
         update_viewport()
