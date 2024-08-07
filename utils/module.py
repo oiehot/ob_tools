@@ -2,11 +2,8 @@ import imp
 import sys
 
 
-def reload_all_modules(prefix=None):
+def reload_all_modules(name=None):
     """모든 모듈들을 Reload 한다.
-    prefix가 앞쪽에 붙은 모듈명을 대상으로 한다.
-
-    :param str prefix: 필터링 할 모듈의 prefix.
 
     사용 예:
         >>> reload_all_modules("oiehot")
@@ -17,8 +14,8 @@ def reload_all_modules(prefix=None):
     # list(reversed(sorted(a.keys())))
     # for idx, mod in enumerate(reversed(mods)):
     for mod in list(reversed(sorted(mods.keys()))):
-        if prefix:
-            if mod.startswith(prefix):
+        if name:
+            if name in mod:
                 if sys.modules[mod]:
                     print("reload: %s" % mod)
                     # try:
@@ -39,11 +36,8 @@ def reload_all_modules(prefix=None):
 #     print( [m for m in sys.modules if m.startswith('oiehot.')] )
 
 
-def unload_all_modules(prefix=None):
+def unload_all_modules(name=None):
     """모든 모듈들을 Unload 한다.
-    prefix가 앞쪽에 붙은 모듈명을 대상으로 한다.
-
-    :param str prefix: 필터링 할 모듈의 prefix.
 
     사용 예:
         >>> unload_all_modules("oiehot")
@@ -52,8 +46,8 @@ def unload_all_modules(prefix=None):
     # ! unload 하는 스크립트를 작성함.
     mods = sys.modules
     for mod in list(reversed(sorted(mods.keys()))):
-        if prefix:
-            if mod.startswith(prefix):
+        if name:
+            if name in mod:
                 if sys.modules[mod]:
                     print("unload: %s" % mod)
                     try:
