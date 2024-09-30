@@ -187,6 +187,51 @@ class CreateAndAssignMaterial(Operator):
         return {'FINISHED'}
 
 
+class SelectObjectsWithSameMaterial(Operator):
+    """현재 선택된 Object에서 사용 중인 Material을 사용하는 모든 오브젝트들을 선택한다.
+    선택된 Object에 연결된 Material이 없다면 경고를 출력한다.
+    선택된 Object에 두 개 이상의 Material이 있는 경우 해당 Material들을 사용중인 모든 오브젝트가 선택은 일단 되나 경고를 출력한다.
+    선택된 Object가 여러 개라면 선택된 오브젝트들에서 사용 중인 모든 Material을 대상으로 한다.
+    """
+    bl_idname = "material.select_objects_with_same_material"
+    bl_label = "Select Objects with Same Material"
+
+    @classmethod
+    def poll(cls, context):
+        """재질을 가지고 있는 오브젝트가 1개 이상 선택되어 있어야만 한다.
+        """
+        return len(context.selected_objects) > 0
+
+    def execute(self, context):
+        """현재 선택중인 오브젝트들에서 사용중인 Material을 사용하는 모든 오브젝트들을 선택한다.
+        """
+        selected_objects = context.selected_objects
+        materials = set()
+
+        # 선택된 오브젝트에서 사용 중인 재질을 수집
+        for obj in selected_objects:
+            if obj.type == "MESH" and obj.data.materials:
+                materials.update(obj.data.materials)
+
+        # 선택된 오브젝트들에 재질이 없는 경우 경고 출력
+        if not materials:
+            self.report({"WARNING"}, "선택된 오브젝트에 재질이 할당되지 않았습니다.")
+            return {"CANCELLED"}
+
+        # 선택된 오브젝트에 두 개 이상의 재질이 있는 경우 경고 출력
+        if len(materials) > 1:
+            self.report({"WARNING"}, "선택된 오브젝트에 두 개 이상의 재질이 할당되어 있습니다.")
+
+        # 모든 오브젝트에서 동일한 재질을 사용하는 오브젝트 선택
+        for obj in bpy.data.objects:
+            if obj.type == "MESH" and obj.data.materials:
+                for mat in obj.data.materials:
+                    if mat in materials:
+                        obj.select_set(True)
+                        break
+
+        return {"FINISHED"}
+
 class ClearUnusedMaterials(Operator):
     bl_idname = "material.clear_unused_materials"
     bl_label = "Clear Unused Materials"

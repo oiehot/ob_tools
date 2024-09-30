@@ -11,7 +11,10 @@ from ..operators.align import AlignAxisAverageOperator, AlignAxisMinMaxOperator
 from ..operators.armature import ToggleWeightPaintMode
 from ..operators.bake import QuickBakeNormal
 from ..operators.gpencil import SetStrokePlacement, SetBrushAndMaterial
-from ..operators.material import ClearUnusedMaterials, CopyMaterial, PasteMaterial, CreateAndAssignMaterial
+from ..operators.material import (
+    ClearUnusedMaterials, CopyMaterial, PasteMaterial, CreateAndAssignMaterial,
+    SelectObjectsWithSameMaterial
+)
 from ..operators.mesh import MergeCloseVertices, QuickMeshDeleteOperator, SelectBoundaryEdges
 from ..operators.modifier import CreateQuickLattice, ApplyQuickLattice, RemoveQuickLattice
 from ..operators.render import SetRenderSettings, ExploreRenderOutputPath
@@ -505,22 +508,17 @@ class GreasePencilPanel(View3DSidePanelBase, Panel):
         # blue_marker.use_overlap_stroke = True
 
 
-class LookPanel(View3DSidePanelBase, Panel):
-    bl_idname = "OB_PT_LookPanel"
-    bl_label = "Look"
+class MaterialPanel(View3DSidePanelBase, Panel):
+    bl_idname = "OB_PT_MaterialPanel"
+    bl_label = "Material"
 
     def draw(self, context):
-        light_grid = create_gridflow_at_layout(self.layout, columns=4, header_text=None)
-        light_grid.operator("object.light_add", text="Sun", icon="NONE").type = "SUN"
-        light_grid.operator("object.light_add", text="Point", icon="NONE").type = "POINT"
-        light_grid.operator("object.light_add", text="Spot", icon="NONE").type = "SPOT"
-        light_grid.operator("object.light_add", text="Area", icon="NONE").type = "AREA"
-
         material_grid = create_gridflow_at_layout(self.layout, columns=2)
         material_grid.operator(CreateAndAssignMaterial.bl_idname, text="New Mat", icon="NONE").color = "RANDOM"
         material_grid.label(text="")
         material_grid.operator(CopyMaterial.bl_idname, text="Copy Mat", icon="NONE")
         material_grid.operator(PasteMaterial.bl_idname, text="Paste Mat", icon="NONE")
+        material_grid.operator(SelectObjectsWithSameMaterial.bl_idname, text="Select Same Mat", icon="NONE")
 
         palette_grid = create_gridflow_at_layout(self.layout, columns=3, header_text="")
         palette_grid.operator(CreateAndAssignMaterial.bl_idname, text="R").color = "RED"
@@ -530,6 +528,17 @@ class LookPanel(View3DSidePanelBase, Panel):
         palette_grid.operator(CreateAndAssignMaterial.bl_idname, text="Gray").color = "GRAY"
         palette_grid.operator(CreateAndAssignMaterial.bl_idname, text="Black").color = "BLACK"
         palette_grid.operator(CreateAndAssignMaterial.bl_idname, text="Checker").color = "CHECKER"
+
+class LightingPanel(View3DSidePanelBase, Panel):
+    bl_idname = "OB_PT_LightingPanel"
+    bl_label = "Lighting"
+
+    def draw(self, context):
+        grid = create_gridflow_at_layout(self.layout, columns=4, header_text=None)
+        grid.operator("object.light_add", text="Sun", icon="NONE").type = "SUN"
+        grid.operator("object.light_add", text="Point", icon="NONE").type = "POINT"
+        grid.operator("object.light_add", text="Spot", icon="NONE").type = "SPOT"
+        grid.operator("object.light_add", text="Area", icon="NONE").type = "AREA"
 
 
 class OptimizationPanel(View3DSidePanelBase, Panel):
