@@ -25,6 +25,7 @@ from ..operators.rigging import (
     SaveObjectVertexGroups, LoadObjectVertexGroups
 )
 from ..operators.scene import FixDataNames, PrintAllHierarchy
+from ..operators.obj import DeleteProperties, ExportProperties, ImportProperties
 from ..operators.text import CreateText
 from ..operators.validate import ValidateScene
 from ..operators.viewport import SetViewportLightingMode, ToggleViewportCamera, ToggleViewportCavity
@@ -271,6 +272,12 @@ class ObjectPanel(View3DSidePanelBase, Panel):
         grid.prop(obj, "show_axis", text="Axis", toggle=True)
         grid.prop(obj, "show_wire", text="Wire", toggle=True)
         grid.prop(obj, "show_in_front", text="In Front", toggle=True)
+
+        prop_grid = create_gridflow_at_layout(self.layout, columns=3)
+        prop_grid.operator(DeleteProperties.bl_idname, text="Del Props")
+        prop_grid.operator(ExportProperties.bl_idname, text="Export Props")
+        prop_grid.operator(ImportProperties.bl_idname, text="Import Props")
+
 
 
 class EditPanel(View3DSidePanelBase, Panel):
