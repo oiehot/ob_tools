@@ -32,6 +32,9 @@ def get_best_data_name(obj) -> str:
 def fix_data_names() -> None:
     for obj in bpy.data.objects:
         data = obj.data
+        # 데이터 블록(data)이 Linked 데이터 블록인 경우 continue 한다.
+        if data.library:
+            continue
         old_data_name: str = data.name
         new_data_name: str = get_best_data_name(obj)
         if old_data_name != new_data_name:
